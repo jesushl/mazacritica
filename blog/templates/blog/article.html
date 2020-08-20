@@ -1,0 +1,28 @@
+
+{% extends "blog/base.html" %}
+
+{% block title %}
+{{ article.title }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  {% if user.is_authenticated%}
+  <a href="{% url 'edit_article' article.id%}">Editar</a>
+  {% endif %}
+  <section>
+    <header>
+        <h2>{{ article.title }}</h2>
+    </header>
+    <article>
+      <h4>{{ article.abstract }}</h4>
+      <p>
+        {{ article.body | safe}}
+      </p>
+    </article>
+  </section>
+</div>
+
+
+{% endblock %}

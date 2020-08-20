@@ -1,0 +1,22 @@
+{% extends 'blog/base.html' %}
+
+
+{% block title %}
+Nuevo Articulo
+{% endblock %}
+
+{% block content %}
+
+{% if user.is_authenticated%}
+<h1>Nuevo Art&iacute;culo</h1>
+<div class='form_group'>
+    <form  method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit"  class="btn btn-primary">Enviar</button>
+    </form>
+  </div>
+{% else %}
+  <h1>You are not allowed here!</h1>
+{%  endif %}
+{% endblock %}

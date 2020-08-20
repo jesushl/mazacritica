@@ -1,0 +1,25 @@
+{% extends 'blog/base.html' %}
+
+
+
+{% load bootstrap4 %}
+
+{% block title %}
+    Nuevo Articulo
+{% endblock %}
+
+{% block content %}
+  {% if user.is_authenticated %}
+    <form role="form" action="new_article" method="post">
+        <h1>Nuevo Articulo</h1>
+        {% csrf_token %}
+        {% bootstrap_form_errors form type='non_fields' %}
+        {% bootstrap_field form.title layout='horizontal' size='sm' %}
+        {% bootstrap_field form.abstract placeholder='Resumen' %}
+        {% bootstrap_field form.body  placeholder='Contenido'%}
+        {% buttons submit='Enviar' reset="Cancel" %}{% endbuttons %}
+    </form>
+    {% else %}
+      <h1>You are not allowed here</h1>
+  {% endif%}
+{% endblock %}

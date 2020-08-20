@@ -1,0 +1,23 @@
+{% extends 'blog/base.html' %}
+
+{% load bootstrap4 %}
+{% block title %}
+Articles List
+{% endblock %}
+{% block content %}
+
+<div class="container"></div>
+
+<div class="list-group list-group-flush">
+  {%  for post in object_list %}
+  <a 
+    href="{% url  'article' post.pk %}" 
+    class="list-group-item list-group-item-action ">
+    {{ post.title }} -
+    {{ post.author }} <br>
+    {{ post.abstract }}
+  </a>
+  {% endfor %}
+</div>
+
+{% endblock %}

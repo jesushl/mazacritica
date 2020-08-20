@@ -1,0 +1,18 @@
+{% extends 'blog/base.html' %}
+
+
+{% block title %}
+Borrar Articulo
+{% endblock %}
+
+{% block content %}
+<h1>Nuevo Art&iacute;culo</h1>
+
+<div class='form_group'>
+    <form  method="POST">
+      {% csrf_token %}
+      <strong> WARNING!</strong>
+      <button type="submit"  class="btn btn-primary">Borrar</button>
+    </form>
+  </div>
+{% endblock %}

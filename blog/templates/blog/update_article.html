@@ -1,0 +1,21 @@
+{% extends 'blog/base.html' %}
+
+
+{% block title %}
+Article Update
+{% endblock %}
+
+{% block content %}
+
+  {% if user.is_authenticated %}
+    <h1>Editando  Art&iacute;culo</h1>
+
+  <div class='form_group'>
+      <form  method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit"  class="btn btn-primary">Enviar</button>
+      </form>
+    </div>
+    {% endif%}
+{% endblock %}

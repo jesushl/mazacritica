@@ -1,0 +1,74 @@
+{% load bootstrap4 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='full' %}
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+
+{% load static%}
+<html>
+
+<head>
+        <link rel="stylesheet" type="text/css" href="{% static 'blog/maza.css' %}">
+        <title>
+                MazaCritica: 
+                {% block title %}
+                {% endblock %}
+        </title>
+</head>
+
+<div class="container">
+        <!--Main container-->
+        <div class="container">
+                <!--Nav Bar container-->
+                <nav class="navbar fixed-top  navbar-expand-lg navbar-light bg-light">
+                        <a class="navbar-brand" href="{% url 'articles' %}"> MazaCritica</a>
+                        <button class="navbar-toggler" type="button" data-toggle="collapse"
+                                data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                                aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                        </button>
+
+                        <div class="collapse navbar-collapse justify-content-between" id="navbarSupportedContent">
+
+                                <form class="form-inline my-0 my-lg-0  offset-md-4  pl-0 ">
+                                        <input class="form-control mr-sm-2 " type="search" placeholder="Search"
+                                                aria-label="Search">
+                                        <button class="btn btn-outline-success my-2 my-sm-0"
+                                                type="submit">Search</button>
+                                </form>
+
+                                <div class="col align-self-left">
+                                        <ul class="navbar-nav mr-auto">
+                                                <li class="nav-item active align-self-left">
+                                                        <a class="nav-link active" href="#">Covid-19</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                        <a class="nav-link active" href="#">Estados</a>
+                                                </li>
+                                                {% if user.is_authenticated %}
+                                                <li class="nav-item">
+                                                        <a class="nav-link active" href="{% url 'new_article_2' %}">Nuevo Articulo</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                        <a class="nav-link active" href="{% url 'logout' %}">Logout</a>
+                                                </li>
+                                                {% else %}
+                                                        
+                                                {% endif %}
+                                        </ul>
+                                </div>
+                        </div>
+                </nav>
+        </div>
+        <!--End of nav bar-->
+        <div class="w-100"></div>
+        <div class="container">
+                {% block content %}(no content){% endblock %}
+        </div>
+</div>
+
+
+</html>

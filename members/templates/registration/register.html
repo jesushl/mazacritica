@@ -1,0 +1,18 @@
+{% extends 'blog/base.html' %}
+
+
+{% block title %}
+Login
+{% endblock %}
+
+{% block content %}
+<h1>MazaCritica </h1>
+<h2>Registro</h2>
+<div class='form_group'>
+    <form  method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit"  class="btn btn-primary">Register</button>
+    </form>
+  </div>
+{% endblock %}

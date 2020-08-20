@@ -1,0 +1,29 @@
+
+{% extends "blog/base.html" %}
+
+{% block title %}
+  Articulos
+{% endblock %}
+
+{% block content %}
+{% if articles %}
+<div class="container">
+  {% for article in articles %}
+    
+      <div class="jumbotron" s>
+        {% if article.image %}
+          <img src="{{article.image}}" class="card-img-top"
+            alt="{{article.title}}">
+        {% endif %}
+        <h3 class="display-4">{{article.title}}</h5>
+        <p class="lead">{{article.abstract}}</p>
+        <a href="/article/{{ article.id }}" class="btn btn-primary">Quiero saber mas</a>
+      
+      </div>
+    
+      {% endfor %}0
+    {% endif %}
+
+  
+</div>  
+{% endblock %}
