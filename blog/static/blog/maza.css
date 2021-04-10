@@ -1,3 +1,58 @@
-body { 
-  padding-top: 65px; 
+/*
+Color palete
+Primary color: #3DD2D2
+Complementary: #d23d3d
+Analogou a #3dd288
+analogou b #3d88d2
+
+triadic a #3d3dd2
+triadic b #d23dd2
+*/
+
+body {
+    padding-top: 65px;
+}
+
+.jumbotron_article {
+    background-color: #68b4b4;
+    border-radius: 1%;
+}
+
+.jumbotron_article h3 {
+    background-color: #e3506c;
+    border-radius: 2%;
+}
+
+.maza_navbar {
+    background-color: #448683;
+    background: rgb(68, 134, 131);
+    background: linear-gradient( 90deg, rgba(68, 134, 131, 1) 0%, rgba(143, 201, 202, 1) 27%, rgba(143, 201, 202, 1) 100%);
+}
+
+.maza_navbar a {
+    color: #fbe5e9;
+}
+
+.maza_navbar a:hover {
+    color: #e3f1f2;
+}
+
+.quiero_saber_mas_btn {
+    background-color: #e3506c;
+    border-color: #7f2544;
+    color: #e3f1f2;
+}
+
+.quiero_saber_mas_btn:hover {
+    background-color: #f7bdc9;
+    color: #e3506c
+}
+
+.article_title {
+    align-content: center;
+    color: #fbe5e9;
+}
+
+.article_abstract {
+    color: #e3f1f2;
 }

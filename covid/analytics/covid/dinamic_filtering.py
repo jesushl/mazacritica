@@ -9,9 +9,9 @@ class DinamicFilter():
   def get_dinamic_filter(
       self,
       filter_dinamic:dict,
-      medic_condition_query_set:QuerySet=None
+      query_set:QuerySet=None
     )->QuerySet:
-      if not medic_condition_query_set:
+      if not query_set:
         current_model_objects = self.model.objects
       return current_model_objects.filter(**filter_dinamic)
 

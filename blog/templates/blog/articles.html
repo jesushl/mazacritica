@@ -1,29 +1,39 @@
-
-{% extends "blog/base.html" %}
-
-{% block title %}
-  Articulos
-{% endblock %}
-
-{% block content %}
-{% if articles %}
+ {% extends "blog/base.html" %} {% block title %} Articulos {% endblock %} {% block content %} {% if articles %}
 <div class="container">
-  {% for article in articles %}
-    
-      <div class="jumbotron" s>
-        {% if article.image %}
-          <img src="{{article.image}}" class="card-img-top"
-            alt="{{article.title}}">
-        {% endif %}
-        <h3 class="display-4">{{article.title}}</h5>
-        <p class="lead">{{article.abstract}}</p>
-        <a href="/article/{{ article.id }}" class="btn btn-primary">Quiero saber mas</a>
-      
-      </div>
-    
-      {% endfor %}0
-    {% endif %}
+    {% for article in articles %}
 
-  
-</div>  
+    <div class="jumbotron jumbotron_article">
+        <div class="container">
+            {% if article.image %}
+            <div class="row">
+                <div class="col-12">
+                    <img src="{{article.image}}" class="card-img-top" alt="{{article.title}}">
+                </div>
+            </div>
+            {% endif %}
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="display-4 article_title">{{article.title}}</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <p class="lead article_abstract">{{article.abstract}}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-8">
+
+                </div>
+                <div class="col-4 align-self-end">
+                    <a href="/article/{{ article.id }}" class="btn  quiero_saber_mas_btn">Quiero saber mas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endfor %} {% endif %}
+
+
+</div>
 {% endblock %}
