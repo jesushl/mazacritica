@@ -2,35 +2,42 @@
 <html>
 
 <head>
-    <link rel="shortcut icon" type="image/jpg" href="{% static 'blog/maza_critica_ico.ico' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'blog/maza.css' %}">
+    <!--Meta values-->
+    <meta property="og:url" content={{ request.build_absolute_uri }}/>
+    <meta property="og:type" content="website" /> {%if article.title %}
+    <meta property="og:title" content="{{ article.title }}" />{% endif %} {%if article.abstract%}
+    <meta property="og:description" content="{{ article.abstract }}" /> {%endif%}{%if article.image%}
+    <meta property="og:image " content="{{ article.image }} " /> {% endif%}
+    <!--END Meta values-->
+    <link rel="shortcut icon " type="image/jpg " href="{% static 'blog/maza_critica_ico.ico' %} " />
+    <link rel="stylesheet " type="text/css " href="{% static 'blog/maza.css' %} ">
     <title>
         MazaCritica: {% block title %} {% endblock %}
     </title>
 </head>
 
-<div class="container">
+<div class="container ">
     <!--Main container-->
-    <div class="container">
+    <div class="container ">
         <!--Nav Bar container-->
-        <nav class="navbar fixed-top  navbar-expand-lg  maza_navbar">
-            <a class="navbar-brand btn" href="{% url 'articles' %}"> Maza Critica</a>
-            <div class="collapse navbar-collapse justify-content-between" id="navbarSupportedContent">
+        <nav class="navbar fixed-top navbar-expand-lg maza_navbar ">
+            <a class="navbar-brand btn " href="{% url 'articles' %} "> Maza Critica</a>
+            <div class="collapse navbar-collapse justify-content-between " id="navbarSupportedContent ">
 
-                <form class="form-inline my-0 my-lg-0  offset-md-4  pl-0 ">
-                    <input class="form-control mr-sm-2 " type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                <form class="form-inline my-0 my-lg-0 offset-md-4 pl-0 ">
+                    <input class="form-control mr-sm-2 " type="search " placeholder="Search " aria-label="Search ">
+                    <button class="btn btn-outline-success my-2 my-sm-0 " type="submit ">Search</button>
                 </form>
 
-                <div class="col align-self-left">
-                    <ul class="navbar-nav mr-auto">
+                <div class="col align-self-left ">
+                    <ul class="navbar-nav mr-auto ">
 
                         {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'new_article_2' %}">Nuevo Articulo</a>
+                        <li class="nav-item ">
+                            <a class="nav-link active " href="{% url 'new_article_2' %} ">Nuevo Articulo</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'logout' %}">Logout</a>
+                        <li class="nav-item ">
+                            <a class="nav-link active " href="{% url 'logout' %} ">Logout</a>
                         </li>
                         {% else %} {% endif %}
                     </ul>
@@ -39,8 +46,8 @@
         </nav>
     </div>
     <!--End of nav bar-->
-    <div class="w-100"></div>
-    <div class="container">
+    <div class="w-100 "></div>
+    <div class="container ">
         {% block content %}(no content){% endblock %}
     </div>
 </div>

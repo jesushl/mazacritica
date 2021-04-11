@@ -1,12 +1,8 @@
 /*
 Color palete
-Primary color: #3DD2D2
-Complementary: #d23d3d
-Analogou a #3dd288
-analogou b #3d88d2
-
-triadic a #3d3dd2
-triadic b #d23dd2
+https://material.io/design/color/the-color-system.html#tools-for-picking-colors
+Primary color: #448683
+Secondary : #cd3853
 */
 
 body {
@@ -48,9 +44,13 @@ body {
     color: #e3506c
 }
 
-.article_title {
+.article_title a {
     align-content: center;
     color: #fbe5e9;
+}
+
+.article_title a:hover {
+    text-decoration: none;
 }
 
 .article_abstract {

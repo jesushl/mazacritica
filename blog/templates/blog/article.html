@@ -1,28 +1,42 @@
-
-{% extends "blog/base.html" %}
-
-{% block title %}
-{{ article.title }}
-{% endblock %}
-
-{% block content %}
+ {% extends "blog/base.html" %} {% block title %} {{ article.title }} {% endblock %} {% block content %}
 
 <div class="container">
-  {% if user.is_authenticated%}
-  <a href="{% url 'edit_article' article.id%}">Editar</a>
-  {% endif %}
-  <section>
-    <header>
-        <h2>{{ article.title }}</h2>
-    </header>
-    <article>
-      <h4>{{ article.abstract }}</h4>
-      <p>
-        {{ article.body | safe}}
-      </p>
-    </article>
-  </section>
+    {% if user.is_authenticated%}
+    <a href="{% url 'edit_article' article.id%}">Editar</a> {% endif %}
+    <div class="row pt-4">
+        <div class="col">
+            <section>
+                <header class="pt-3">
+                    <h3>{{ article.title }}</h3>
+                </header>
+                <br>
+                <article>
+                    <h5>{{ article.abstract }}</h5>
+                    <br>
+                    <p class="pt-3">
+                        {{ article.body | safe}}
+                    </p>
+                </article>
+            </section>
+        </div>
+    </div>
+
 </div>
 
+<!-- Load Facebook SDK for JavaScript -->
+<div id="fb-root"></div>
+<script>
+    (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s);
+        js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.0";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+</script>
 
+<!-- Your share button code -->
+<div class="fb-share-button" data-href="https://www.your-domain.com/your-page.html" data-layout="button_count">
+</div>
 {% endblock %}

@@ -12,8 +12,10 @@
             </div>
             {% endif %}
             <div class="row">
-                <div class="col-12">
-                    <h3 class="display-4 article_title">{{article.title}}</h5>
+                <div class="col-12 article_title">
+                    <a href="/article/{{ article.id }}" class="article_title">
+                        <h3 class="display-4 article_title">{{article.title}}</h5>
+                    </a>
                 </div>
             </div>
             <div class="row">
