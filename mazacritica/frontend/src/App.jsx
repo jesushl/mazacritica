@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 
 const notes = [
@@ -9,9 +9,26 @@ const notes = [
     summary:
       'Una lectura con contexto sobre las decisiones que movieron la agenda pública y sus protagonistas.',
     source: 'MazaCrítica · Redacción',
+    publishedAt: '13 oct. 2026 · 18:42',
+    informationStatus: 'Contexto documentado',
+    editor: 'Mesa editorial',
+    content:
+      'Las decisiones públicas de esta semana dibujan un nuevo mapa de alianzas, prioridades y tensiones institucionales. Esta nota reúne los hechos publicados, sus fuentes y las preguntas que todavía permanecen abiertas.',
     time: 'Hace 18 min',
     tags: ['Poder público', 'Contexto', 'Seguimiento'],
     comments: 38,
+    commentSamples: [
+      {
+        nickname: '@NorteInformado',
+        time: 'Hace 12 min',
+        text: 'El contexto ayuda a separar la decisión publicada de las interpretaciones que todavía están abiertas.',
+      },
+      {
+        nickname: '@ClaraM',
+        time: 'Hace 5 min',
+        text: '¿Podrían agregar la fuente original del documento en la próxima actualización?',
+      },
+    ],
     shares: 124,
     age: 18,
     discussionRank: 2,
@@ -24,9 +41,21 @@ const notes = [
     summary:
       'La comisión presentó el calendario de trabajo. Estas son las preguntas que todavía no tienen respuesta.',
     source: 'El Diario Público',
+    publishedAt: '13 oct. 2026 · 17:58',
+    informationStatus: 'Debate abierto',
+    editor: 'MazaCrítica · Verificación',
+    content:
+      'La comisión legislativa presentó un calendario para discutir la reforma de transparencia. El documento todavía está sujeto a cambios y la votación no tiene fecha definitiva.',
     time: 'Hace 1 h',
     tags: ['Legislativo', 'Transparencia'],
     comments: 16,
+    commentSamples: [
+      {
+        nickname: '@VozPublica',
+        time: 'Hace 28 min',
+        text: 'Sería importante conocer el calendario completo antes de evaluar el alcance de la reforma.',
+      },
+    ],
     shares: 67,
     age: 60,
     discussionRank: 3,
@@ -39,9 +68,26 @@ const notes = [
     summary:
       'Qué se ha documentado, qué se ha señalado y qué permanece pendiente en el expediente.',
     source: 'MazaCrítica · Archivo',
+    publishedAt: '12 oct. 2026 · 09:15',
+    informationStatus: 'Investigación en curso',
+    editor: 'Mesa editorial',
+    content:
+      'El expediente reúne señalamientos y documentos públicos, pero no existe una sentencia firme. Esta nota separa lo que está documentado de aquello que todavía se encuentra bajo investigación.',
     time: 'Ayer',
     tags: ['Investigación en curso', 'Presunta irregularidad'],
     comments: 51,
+    commentSamples: [
+      {
+        nickname: '@ObservadorCivico',
+        time: 'Ayer',
+        text: 'Gracias por distinguir entre un señalamiento y una resolución. Esa diferencia cambia la lectura.',
+      },
+      {
+        nickname: '@ArchivoAbierto',
+        time: 'Ayer',
+        text: 'Queda pendiente revisar qué autoridad lleva el expediente y cuál es el siguiente plazo.',
+      },
+    ],
     shares: 89,
     age: 1440,
     discussionRank: 1,
@@ -61,6 +107,24 @@ function App() {
   const [query, setQuery] = useState('');
   const [savedNotes, setSavedNotes] = useState([]);
   const [notice, setNotice] = useState('');
+  const [selectedNoteId, setSelectedNoteId] = useState(null);
+  const [socialVariant, setSocialVariant] = useState('Facebook');
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollingDown = currentScrollY > lastScrollY.current;
+      const shouldShow = currentScrollY < 80 || !scrollingDown;
+
+      setHeaderVisible(shouldShow);
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const filteredNotes = useMemo(() => {
     const normalizedQuery = query.toLowerCase().trim();
@@ -108,6 +172,14 @@ function App() {
     }
   };
 
+  const selectedNote = notes.find((note) => note.id === selectedNoteId);
+
+  const openNote = (noteId) => {
+    setSelectedNoteId(noteId);
+    setSocialVariant('Facebook');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -121,41 +193,31 @@ function App() {
           </div>
         </div>
 
-        <nav className="primary-nav" aria-label="Navegación principal">
-          <button className="nav-item is-active" type="button" aria-current="page">
-            <span aria-hidden="true">⌂</span>
-            Inicio
-          </button>
-          <button className="nav-item" type="button" onClick={() => showNotice('La exploración estará disponible pronto.')}>
-            <span aria-hidden="true">⌕</span>
-            Explorar
-          </button>
-          <button className="nav-item" type="button" onClick={() => showNotice('El archivo se conectará al backend.')}>
-            <span aria-hidden="true">▱</span>
-            Archivo
-          </button>
-          <button className="nav-item" type="button" onClick={() => showNotice('Las conversaciones estarán disponibles pronto.')}>
-            <span aria-hidden="true">◌</span>
-            Conversaciones
-            <span className="nav-count">4</span>
-          </button>
-        </nav>
-
-        <div className="sidebar-rule" />
-        <p className="nav-label">Tu mesa de trabajo</p>
-        <button className="text-nav-item" type="button" onClick={() => showNotice('Tus notas guardadas aparecerán aquí.')}>
-          <span className="nav-dot dot-coral" />
-          Guardados
-          <span className="nav-count">{savedNotes.length || ''}</span>
-        </button>
-        <button className="text-nav-item" type="button" onClick={() => showNotice('El seguimiento de temas estará disponible pronto.')}>
-          <span className="nav-dot dot-blue" />
-          Temas seguidos
-        </button>
-        <button className="text-nav-item" type="button" onClick={() => showNotice('Tus aportes aparecerán aquí.')}>
-          <span className="nav-dot dot-ochre" />
-          Mis aportes
-        </button>
+        <details className="nav-accordion" open>
+          <summary>
+            <span>Secciones</span>
+            <span className="accordion-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <nav className="primary-nav" aria-label="Navegación principal">
+            <button className="nav-item is-active" type="button" aria-current="page">
+              <span aria-hidden="true">⌂</span>
+              Inicio
+            </button>
+            <button className="nav-item" type="button" onClick={() => showNotice('La exploración estará disponible pronto.')}>
+              <span aria-hidden="true">⌕</span>
+              Explorar
+            </button>
+            <button className="nav-item" type="button" onClick={() => showNotice('El archivo se conectará al backend.')}>
+              <span aria-hidden="true">▱</span>
+              Archivo
+            </button>
+            <button className="nav-item" type="button" onClick={() => showNotice('Las conversaciones estarán disponibles pronto.')}>
+              <span aria-hidden="true">◌</span>
+              Conversaciones
+              <span className="nav-count">4</span>
+            </button>
+          </nav>
+        </details>
 
         <div className="sidebar-footer">
           <div className="profile-avatar">LC</div>
@@ -170,7 +232,7 @@ function App() {
       </aside>
 
       <main className="main-column">
-        <header className="topbar">
+        <header className={headerVisible ? 'topbar' : 'topbar is-hidden'}>
           <div className="mobile-brand">Maza<span>Crítica</span></div>
           <label className="search-box">
             <span aria-hidden="true">⌕</span>
@@ -186,60 +248,155 @@ function App() {
           <button className="login-button" type="button" onClick={() => showNotice('El acceso estará disponible pronto.')}>
             Ingresar
           </button>
-          <button className="join-button" type="button" onClick={() => showNotice('El registro estará disponible pronto.')}>
-            Participar
-          </button>
         </header>
 
-        <section className="intro-section">
-          <div>
-            <p className="eyebrow"><span className="live-pulse" /> Actualizado hace 3 minutos</p>
-            <h1>No seguimos personas.<br /><em>Seguimos hechos.</em></h1>
-            <p className="intro-copy">
-              Noticias, contexto y conversación para entender cómo se mueve el poder público.
-            </p>
-          </div>
-          <div className="intro-stamp">
-            <span>EDICIÓN</span>
-            <strong>01</strong>
-            <span>13 OCT. 2026</span>
-          </div>
-        </section>
-
-        <div className="feed-tabs" role="tablist" aria-label="Orden del feed">
-          {['Para ti', 'Más recientes', 'Más discutidas'].map((tab) => (
-            <button
-              className={activeTab === tab ? 'feed-tab is-active' : 'feed-tab'}
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              aria-selected={activeTab === tab}
-              role="tab"
-              type="button"
-            >
-              {tab}
+        {selectedNote ? (
+          <article className={`note-detail accent-${selectedNote.accent}`}>
+            <button className="back-button" type="button" onClick={() => setSelectedNoteId(null)}>
+              ← Volver al feed
             </button>
-          ))}
-        </div>
+            <div className="detail-meta">
+              <span className="note-type">{selectedNote.type}</span>
+              <span>·</span>
+              <span>{selectedNote.publishedAt}</span>
+            </div>
+            <h1>{selectedNote.title}</h1>
+            <p className="detail-summary">{selectedNote.summary}</p>
+            <div className="editor-byline">
+              <span className="source-avatar">{selectedNote.editor === 'Mesa editorial' ? 'MC' : 'VE'}</span>
+              <span>
+                <strong>Publicado por {selectedNote.editor}</strong>
+                <small>{selectedNote.source}</small>
+              </span>
+            </div>
+            <div className="detail-status">
+              <span className="status-mark" />
+              <span><strong>Estado de la información:</strong> {selectedNote.informationStatus}</span>
+            </div>
+            <p className="detail-content">{selectedNote.content}</p>
+            <div className="detail-tags">
+              {selectedNote.tags.map((tag) => <span className="note-tag" key={tag}>{tag}</span>)}
+            </div>
 
-        <section className="tag-strip" aria-label="Filtrar por etiquetas">
-          <span className="filter-label">Filtrar</span>
-          {['Todas', 'Poder público', 'Legislativo', 'Investigación en curso'].map((tag) => (
-            <button
-              className={activeTag === tag ? 'filter-chip is-active' : 'filter-chip'}
-              key={tag}
-              onClick={() => setActiveTag(tag)}
-              aria-pressed={activeTag === tag}
-              type="button"
-            >
-              {tag}
-            </button>
-          ))}
-        </section>
+            <section className="social-preview" aria-labelledby="social-preview-title">
+              <div className="detail-section-heading">
+                <div>
+                  <span className="eyebrow">PRESENTACIÓN SOCIAL</span>
+                  <h2 id="social-preview-title">Una nota, distintos canales</h2>
+                </div>
+                <span className="editor-only-label">Solo editores</span>
+              </div>
+              <div className="variant-tabs" role="tablist" aria-label="Variantes sociales">
+                {['Facebook', 'Instagram', 'TikTok'].map((variant) => (
+                  <button
+                    className={socialVariant === variant ? 'variant-tab is-active' : 'variant-tab'}
+                    key={variant}
+                    onClick={() => setSocialVariant(variant)}
+                    aria-selected={socialVariant === variant}
+                    role="tab"
+                    type="button"
+                  >
+                    {variant}
+                  </button>
+                ))}
+              </div>
+              <div className={`social-card social-${socialVariant.toLowerCase()}`}>
+                <span className="social-card-label">{socialVariant} · Vista previa</span>
+                <strong>{selectedNote.title}</strong>
+                <p>{selectedNote.summary}</p>
+                <small>{selectedNote.tags.join(' · ')}</small>
+              </div>
+            </section>
 
-        <section className="feed" aria-live="polite">
-          {filteredNotes.length ? (
-            filteredNotes.map((note, index) => (
-              <article className={`note-card accent-${note.accent}`} key={note.id}>
+            <section className="comments-section" aria-labelledby="comments-title">
+              <div className="detail-section-heading">
+                <div>
+                  <span className="eyebrow">CONVERSACIÓN</span>
+                  <h2 id="comments-title">{selectedNote.comments} comentarios</h2>
+                </div>
+              </div>
+              <div className="comment-list">
+                {(selectedNote.commentSamples || []).map((comment) => (
+                  <article className="comment" key={`${comment.nickname}-${comment.time}`}>
+                    <div className="comment-avatar">{comment.nickname.slice(1, 3).toUpperCase()}</div>
+                    <div className="comment-body">
+                      <div className="comment-meta">
+                        <strong>{comment.nickname}</strong>
+                        <span>{comment.time}</span>
+                      </div>
+                      <p>{comment.text}</p>
+                      <div className="comment-actions">
+                        <button type="button" onClick={() => showNotice('Las respuestas estarán disponibles al conectar la cuenta.')}>
+                          Responder
+                        </button>
+                        <button type="button" onClick={() => showNotice('Los reportes estarán disponibles al conectar la moderación.')}>
+                          Reportar
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="comment-gate">
+                <span className="comment-gate-mark">◌</span>
+                <div>
+                  <strong>La conversación empieza con contexto.</strong>
+                  <p>Regístrate para comentar con tu nickname. Las notas editoriales solo las publica MazaCrítica.</p>
+                </div>
+              </div>
+            </section>
+          </article>
+        ) : (
+          <>
+            <section className="intro-section">
+              <div>
+                <p className="eyebrow"><span className="live-pulse" /> Actualizado hace 3 minutos</p>
+                <h1>No seguimos personas.<br /><em>Seguimos hechos.</em></h1>
+                <p className="intro-copy">
+                  Noticias, contexto y conversación para entender cómo se mueve el poder público.
+                </p>
+              </div>
+              <div className="intro-stamp">
+                <span>EDICIÓN</span>
+                <strong>01</strong>
+                <span>13 OCT. 2026</span>
+              </div>
+            </section>
+
+            <div className="feed-tabs" role="tablist" aria-label="Orden del feed">
+              {['Para ti', 'Más recientes', 'Más discutidas'].map((tab) => (
+                <button
+                  className={activeTab === tab ? 'feed-tab is-active' : 'feed-tab'}
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  aria-selected={activeTab === tab}
+                  role="tab"
+                  type="button"
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            <section className="tag-strip" aria-label="Filtrar por etiquetas">
+              <span className="filter-label">Filtrar</span>
+              {['Todas', 'Poder público', 'Legislativo', 'Investigación en curso'].map((tag) => (
+                <button
+                  className={activeTag === tag ? 'filter-chip is-active' : 'filter-chip'}
+                  key={tag}
+                  onClick={() => setActiveTag(tag)}
+                  aria-pressed={activeTag === tag}
+                  type="button"
+                >
+                  {tag}
+                </button>
+              ))}
+            </section>
+
+            <section className="feed" aria-live="polite">
+              {filteredNotes.length ? (
+                filteredNotes.map((note, index) => (
+                  <article className={`note-card accent-${note.accent}`} key={note.id}>
                 <div className="note-meta">
                   <span className="note-type">{note.type}</span>
                   <span className="meta-separator">·</span>
@@ -253,7 +410,9 @@ function App() {
                     {savedNotes.includes(note.id) ? '★' : '☆'}
                   </button>
                 </div>
-                <h2>{note.title}</h2>
+                <button className="note-title-button" type="button" onClick={() => openNote(note.id)}>
+                  <h2>{note.title}</h2>
+                </button>
                 <p className="note-summary">{note.summary}</p>
                 <div className="note-source">
                   <span className="source-avatar">{index === 0 ? 'MC' : 'EP'}</span>
@@ -264,6 +423,9 @@ function App() {
                     {note.tags.map((tag) => <span className="note-tag" key={tag}>{tag}</span>)}
                   </div>
                   <div className="note-actions">
+                    <button type="button" onClick={() => openNote(note.id)}>
+                      Leer nota →
+                    </button>
                     <button type="button" onClick={() => showNotice('La conversación se abrirá cuando haya comentarios.')}>
                       ◌ {note.comments}
                     </button>
@@ -272,16 +434,18 @@ function App() {
                     </button>
                   </div>
                 </div>
-              </article>
-            ))
-          ) : (
-            <div className="empty-state">
-              <span className="empty-mark">∅</span>
-              <h2>No encontramos esa nota</h2>
-              <p>Prueba con otra palabra o quita el filtro para ampliar la búsqueda.</p>
-            </div>
-          )}
-        </section>
+                  </article>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <span className="empty-mark">∅</span>
+                  <h2>No encontramos esa nota</h2>
+                  <p>Prueba con otra palabra o quita el filtro para ampliar la búsqueda.</p>
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </main>
 
       <aside className="right-rail">
