@@ -40,7 +40,7 @@ mazacritica/
 
 ## Requisitos
 
-- Python 3.12 o compatible con el entorno del proyecto.
+- Python 3.14.7, indicado en `.python-version`.
 - Node.js y npm.
 - Un entorno virtual Python en `.env/`, o las dependencias Django y Django REST Framework instaladas.
 
@@ -51,14 +51,17 @@ mazacritica/
 Desde la raíz del repositorio:
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 cd mazacritica
-../.env/bin/python manage.py migrate
-../.env/bin/python manage.py runserver
+python manage.py migrate
+python manage.py runserver
 ```
 
 El backend estará disponible en `http://localhost:8000/`.
 
-Si el entorno virtual no existe, crea uno e instala Django, Django REST Framework y `django-webpack-loader` según las dependencias del entorno utilizado.
+Python 3.15.0 ya fue publicado, pero el proyecto se mantiene en Python 3.14.7 porque Django todavía no declara soporte oficial para Python 3.15. Cuando Django actualice esa compatibilidad, se podrá cambiar `.python-version` y revisar las dependencias.
 
 ### Frontend
 

@@ -12,10 +12,12 @@ El producto también contempla una sección del Poder Judicial y una base de dat
 
 El backend está construido con:
 
-- Django 5.1.
+- Django 5.2 LTS.
 - Django REST Framework.
 - SQLite para desarrollo.
 - Django Admin.
+
+La versión objetivo de Python es `3.14.7`, definida en `.python-version` y soportada oficialmente por Django 5.2. Python 3.15.0 ya fue publicado, pero aún no se usa porque Django no declara soporte oficial para esa versión.
 
 La aplicación principal es `mazacritica/api/`. Las rutas del proyecto incluyen `api.urls` desde la raíz, por lo que los endpoints no llevan el prefijo `/api/`.
 
@@ -187,7 +189,21 @@ Toda nota debe diferenciar hechos documentados, denuncias, investigaciones, aná
 - La base electoral todavía es diseño, no implementación.
 - La configuración de estáticos de Django conserva referencias históricas a Webpack mientras el frontend usa Vite.
 
-## 11. Criterios para producción
+## 11. Compatibilidad de Python
+
+Para preparar un entorno nuevo:
+
+```bash
+pyenv install 3.14.7
+pyenv local 3.14.7
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+La migración a Python 3.15 debe esperar a que la versión de Django utilizada publique soporte oficial y a que las dependencias del proyecto pasen la suite completa de pruebas.
+
+## 12. Criterios para producción
 
 Antes de desplegar:
 
