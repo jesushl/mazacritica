@@ -54,7 +54,11 @@ class LoginView(APIView):
             user = User.objects.filter(email__iexact=str(email)).first()
         elif username:
             user = User.objects.filter(username__iexact=str(username)).first()
-        if user is None or not user.check_password(password):
+        if (
+            user is None
+            or not user.is_active
+            or not user.check_password(password)
+        ):
             return Response(
                 {'detail': 'Credenciales inválidas.'},
                 status=status.HTTP_401_UNAUTHORIZED,

@@ -1,6 +1,8 @@
 import re
 
 from django.contrib.auth.models import Group, User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
 
@@ -31,6 +33,14 @@ class RegisterSerializer(serializers.Serializer):
         ):
             raise serializers.ValidationError('Ese nickname ya está registrado.')
         return normalized
+
+    def validate(self, attrs):
+        candidate = User(username=attrs['nickname'], email=attrs['email'])
+        try:
+            validate_password(attrs['password'], user=candidate)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'password': list(exc.messages)})
+        return attrs
 
     def create(self, validated_data):
         with transaction.atomic():

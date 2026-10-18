@@ -402,6 +402,48 @@ class AuthApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], 'Credenciales inválidas.')
+
+    def test_login_rejects_inactive_user_with_valid_password(self):
+        self.client.post(
+            '/register/',
+            {
+                'email': 'ana@example.com',
+                'password': 'password-segura',
+                'nickname': 'ana_01',
+            },
+            format='json',
+        )
+        user = User.objects.get(username='ana_01')
+        user.is_active = False
+        user.save(update_fields=['is_active'])
+
+        response = self.client.post(
+            '/login/',
+            {'email': 'ana@example.com', 'password': 'password-segura'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], 'Credenciales inválidas.')
+        self.assertNotIn('token', response.data)
+        self.assertFalse(Token.objects.filter(user=user).exists())
+
+    def test_register_rejects_short_or_common_password(self):
+        for password in ('short', 'password'):
+            response = self.client.post(
+                '/register/',
+                {
+                    'email': 'ana@example.com',
+                    'password': password,
+                    'nickname': 'ana_01',
+                },
+                format='json',
+            )
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn('password', response.data)
+
+        self.assertEqual(User.objects.count(), 0)
 
     def test_logout_deletes_token(self):
         self.client.post(
