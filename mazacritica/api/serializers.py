@@ -1,21 +1,51 @@
-from django.contrib.auth.models import User
+import re
+
+from django.contrib.auth.models import Group, User
+from django.db import transaction
 from rest_framework import serializers
 
-from .models import Note, Source, Tag
+from .models import Note, Source, Tag, UserProfile
+
+NICKNAME_PATTERN = re.compile(r'[a-z0-9_]{3,30}')
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
+class RegisterSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    nickname = serializers.CharField()
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('Ese correo ya está registrado.')
+        return value
+
+    def validate_nickname(self, value):
+        normalized = value.strip().lower()
+        if NICKNAME_PATTERN.fullmatch(normalized) is None:
+            raise serializers.ValidationError(
+                'El nickname debe tener de 3 a 30 caracteres y solo puede usar a-z, 0-9 y _.'
+            )
+        if (
+            User.objects.filter(username=normalized).exists()
+            or UserProfile.objects.filter(nickname=normalized).exists()
+        ):
+            raise serializers.ValidationError('Ese nickname ya está registrado.')
+        return normalized
 
     def create(self, validated_data):
-        return User.objects.create_user(
-            username=validated_data['email'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-        )
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=validated_data['nickname'],
+                email=validated_data['email'],
+                password=validated_data['password'],
+            )
+            UserProfile.objects.create(
+                user=user,
+                nickname=validated_data['nickname'],
+            )
+            member_group, _created = Group.objects.get_or_create(name='member')
+            user.groups.add(member_group)
+        return user
 
 
 class TagSerializer(serializers.ModelSerializer):

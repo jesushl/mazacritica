@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import Note, Source, Tag
+from .models import Note, Source, Tag, UserProfile
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('nickname', 'user')
+    search_fields = ('nickname', 'user__email', 'user__username')
 
 
 @admin.register(Tag)

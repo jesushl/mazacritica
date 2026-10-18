@@ -1,24 +1,88 @@
+from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import permissions, status, viewsets
+from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Note, Source, Tag
 from .serializers import (
     NoteSerializer,
+    RegisterSerializer,
     SourceSerializer,
     TagSerializer,
-    UserSerializer,
 )
 
 
-class UserCreate(APIView):
+def _account_payload(user, token):
+    return {
+        'token': token.key,
+        'nickname': user.profile.nickname,
+        'email': user.email,
+        'groups': list(user.groups.order_by('name').values_list('name', flat=True)),
+    }
+
+
+class RegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def post(self, request, format=None):
-        serializer = UserSerializer(data=request.data)
+        serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            user = serializer.save()
+            return Response(
+                {
+                    'id': user.id,
+                    'email': user.email,
+                    'nickname': user.profile.nickname,
+                },
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, format=None):
+        email = request.data.get('email')
+        username = request.data.get('username')
+        password = request.data.get('password') or ''
+        user = None
+        if email:
+            user = User.objects.filter(email__iexact=str(email)).first()
+        elif username:
+            user = User.objects.filter(username__iexact=str(username)).first()
+        if user is None or not user.check_password(password):
+            return Response(
+                {'detail': 'Credenciales inválidas.'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        token, _created = Token.objects.get_or_create(user=user)
+        return Response(_account_payload(user, token))
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, format=None):
+        Token.objects.filter(user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, format=None):
+        user = request.user
+        return Response({
+            'id': user.id,
+            'email': user.email,
+            'nickname': user.profile.nickname,
+            'groups': list(
+                user.groups.order_by('name').values_list('name', flat=True)
+            ),
+        })
 
 
 class TagViewSet(viewsets.ModelViewSet):

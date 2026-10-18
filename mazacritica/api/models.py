@@ -3,6 +3,22 @@ from django.db import models
 from django.utils.text import slugify
 
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='profile',
+    )
+    nickname = models.CharField(max_length=30, unique=True)
+
+    def save(self, *args, **kwargs):
+        self.nickname = self.nickname.strip().lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nickname
+
+
 class Tag(models.Model):
     class Kind(models.TextChoices):
         TOPIC = 'topic', 'Tema'
