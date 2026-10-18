@@ -169,6 +169,12 @@ describe('experiencia conectada', () => {
     const postedReply = screen.getByText('Una respuesta').closest('article')
     expect(within(postedReply).queryByRole('button', { name: 'Responder' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Respuesta directa')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Salir' }))
+    expect(await screen.findByRole('button', { name: 'Ingresar' })).toBeInTheDocument()
+    expect(screen.queryByText('Un hecho')).not.toBeInTheDocument()
+    expect(screen.queryByText('Una respuesta')).not.toBeInTheDocument()
+    expect(screen.getByText('Comentario visible')).toBeInTheDocument()
   })
 
   it('shows note creation only to an editor decided by /me/', async () => {

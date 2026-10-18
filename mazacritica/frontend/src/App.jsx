@@ -201,6 +201,13 @@ function App() {
     await api.logout()
     setAccount(null)
     setNoteFormOpen(false)
+    if (selectedNoteId) {
+      try {
+        setComments(await api.comments(selectedNoteId))
+      } catch {
+        setComments([])
+      }
+    }
     showNotice('Sesión cerrada.')
   }
 
