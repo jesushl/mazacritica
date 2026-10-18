@@ -226,3 +226,153 @@ class ModerationAction(models.Model):
 
     def __str__(self):
         return f'{self.actor_id} marcó {self.comment_id} como {self.status}'
+
+
+class Election(models.Model):
+    name = models.CharField(max_length=180)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+    held_on = models.DateField()
+    description = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['held_on', 'name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class Office(models.Model):
+    class Power(models.TextChoices):
+        EXECUTIVE = 'executive', 'Ejecutivo'
+        LEGISLATIVE = 'legislative', 'Legislativo'
+        JUDICIAL = 'judicial', 'Judicial'
+
+    name = models.CharField(max_length=180)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+    power = models.CharField(max_length=20, choices=Power.choices)
+
+    class Meta:
+        ordering = ['power', 'name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class Candidate(models.Model):
+    name = models.CharField(max_length=180)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class ElectionZone(models.Model):
+    name = models.CharField(max_length=180)
+    code = models.CharField(max_length=40, unique=True)
+
+    class Meta:
+        ordering = ['code']
+
+    def __str__(self):
+        return self.code
+
+
+class PostalCode(models.Model):
+    code = models.CharField(max_length=10, unique=True)
+
+    class Meta:
+        ordering = ['code']
+
+    def __str__(self):
+        return self.code
+
+
+class Candidacy(models.Model):
+    class Status(models.TextChoices):
+        CONFIRMED = 'confirmed', 'Confirmada'
+        UNCONFIRMED = 'unconfirmed', 'Sin confirmar'
+        WITHDRAWN = 'withdrawn', 'Retirada'
+
+    candidate = models.ForeignKey(
+        Candidate,
+        on_delete=models.PROTECT,
+        related_name='candidacies',
+    )
+    election = models.ForeignKey(
+        Election,
+        on_delete=models.PROTECT,
+        related_name='candidacies',
+    )
+    office = models.ForeignKey(
+        Office,
+        on_delete=models.PROTECT,
+        related_name='candidacies',
+    )
+    zone = models.ForeignKey(
+        ElectionZone,
+        on_delete=models.PROTECT,
+        related_name='candidacies',
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.CONFIRMED,
+    )
+
+    class Meta:
+        ordering = ['election', 'office', 'candidate']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['candidate', 'election', 'office', 'zone'],
+                name='unique_candidacy_candidate_election_office_zone',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.candidate} / {self.office}'
+
+
+class PostalCodeZoneMapping(models.Model):
+    postal_code = models.ForeignKey(
+        PostalCode,
+        on_delete=models.CASCADE,
+        related_name='zone_mappings',
+    )
+    zone = models.ForeignKey(
+        ElectionZone,
+        on_delete=models.PROTECT,
+        related_name='postal_code_mappings',
+    )
+    source = models.CharField(max_length=255)
+    valid_from = models.DateField()
+    valid_to = models.DateField()
+
+    class Meta:
+        ordering = ['postal_code__code', 'zone__code', 'valid_from']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['postal_code', 'zone', 'valid_from'],
+                name='unique_postal_zone_valid_from',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.postal_code} → {self.zone}'
