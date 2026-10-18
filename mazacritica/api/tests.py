@@ -35,6 +35,13 @@ class ContentApiTests(APITestCase):
             email='editor@example.com',
             password='password-segura',
         )
+        self.user.groups.add(Group.objects.get_or_create(name='editor')[0])
+        self.member = User.objects.create_user(
+            username='miembro',
+            email='miembro@example.com',
+            password='password-segura',
+        )
+        self.member.groups.add(Group.objects.get_or_create(name='member')[0])
         self.source = Source.objects.create(
             name='Fuente de prueba',
             url='https://example.com/fuente',
@@ -49,7 +56,7 @@ class ContentApiTests(APITestCase):
             published_at=self.published_at,
         )
         self.published_note.tags.add(self.tag)
-        Note.objects.create(
+        self.draft = Note.objects.create(
             title='Borrador privado',
             content='Contenido en revisión.',
             source=self.source,
@@ -104,6 +111,159 @@ class ContentApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('published_at', response.data)
+
+    def test_member_reads_published_notes_only(self):
+        self.client.force_authenticate(user=self.member)
+        response = self.client.get('/notes/')
+        draft_response = self.client.get(f'/notes/{self.draft.id}/')
+        filtered = self.client.get('/notes/?status=draft')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [item['id'] for item in response.data],
+            [self.published_note.id],
+        )
+        self.assertEqual(draft_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(filtered.data, [])
+
+    def test_drafts_are_hidden_from_anonymous_users_and_members(self):
+        anonymous_list = self.client.get('/notes/')
+        anonymous_draft = self.client.get(f'/notes/{self.draft.id}/')
+        self.client.force_authenticate(user=self.member)
+        member_list = self.client.get('/notes/')
+        member_draft = self.client.get(f'/notes/{self.draft.id}/')
+
+        self.assertEqual(
+            [item['id'] for item in anonymous_list.data],
+            [self.published_note.id],
+        )
+        self.assertEqual(anonymous_draft.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            [item['id'] for item in member_list.data],
+            [self.published_note.id],
+        )
+        self.assertEqual(member_draft.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_member_cannot_create_update_or_delete_notes_tags_or_sources(self):
+        self.client.force_authenticate(user=self.member)
+        responses = [
+            self.client.post(
+                '/notes/',
+                {
+                    'title': 'Nota de un miembro',
+                    'content': 'No debe crearse.',
+                    'source': self.source.id,
+                },
+                format='json',
+            ),
+            self.client.patch(
+                f'/notes/{self.published_note.id}/',
+                {'title': 'Cambio no permitido'},
+                format='json',
+            ),
+            self.client.delete(f'/notes/{self.published_note.id}/'),
+            self.client.post(
+                '/tags/',
+                {'name': 'Etiqueta de miembro'},
+                format='json',
+            ),
+            self.client.patch(
+                f'/tags/{self.tag.id}/',
+                {'description': 'Cambio no permitido'},
+                format='json',
+            ),
+            self.client.delete(f'/tags/{self.tag.id}/'),
+            self.client.post(
+                '/sources/',
+                {
+                    'name': 'Fuente de miembro',
+                    'url': 'https://example.com/miembro',
+                },
+                format='json',
+            ),
+            self.client.patch(
+                f'/sources/{self.source.id}/',
+                {'publisher': 'Cambio no permitido'},
+                format='json',
+            ),
+            self.client.delete(f'/sources/{self.source.id}/'),
+        ]
+
+        self.assertTrue(all(
+            response.status_code == status.HTTP_403_FORBIDDEN
+            for response in responses
+        ))
+        self.assertFalse(Note.objects.filter(title='Nota de un miembro').exists())
+
+    def test_editor_can_publish_edit_and_archive_notes(self):
+        self.client.force_authenticate(user=self.user)
+        created = self.client.post(
+            '/notes/',
+            {
+                'title': 'Nota del editor',
+                'content': 'Contenido editorial.',
+                'source': self.source.id,
+                'status': Note.EditorialStatus.PUBLISHED,
+                'published_at': self.published_at.isoformat(),
+                'author': self.member.id,
+            },
+            format='json',
+        )
+        edited = self.client.patch(
+            f'/notes/{created.data["id"]}/',
+            {'excerpt': 'Resumen editado.'},
+            format='json',
+        )
+        archived = self.client.patch(
+            f'/notes/{created.data["id"]}/',
+            {'status': Note.EditorialStatus.ARCHIVED},
+            format='json',
+        )
+        note = Note.objects.get(pk=created.data['id'])
+        visible = self.client.get('/notes/')
+
+        self.assertEqual(created.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(edited.status_code, status.HTTP_200_OK)
+        self.assertEqual(archived.status_code, status.HTTP_200_OK)
+        self.assertEqual(note.author, self.user)
+        self.assertEqual(note.status, Note.EditorialStatus.ARCHIVED)
+        self.assertEqual(note.excerpt, 'Resumen editado.')
+        self.assertIn(self.draft.id, [item['id'] for item in visible.data])
+
+    def test_editor_can_manage_tags_and_sources(self):
+        self.client.force_authenticate(user=self.user)
+        tag = self.client.post(
+            '/tags/',
+            {'name': 'Tema editorial de prueba', 'kind': 'topic'},
+            format='json',
+        )
+        tag_update = self.client.patch(
+            f'/tags/{tag.data["id"]}/',
+            {'description': 'Estado neutral.'},
+            format='json',
+        )
+        source = self.client.post(
+            '/sources/',
+            {
+                'name': 'Fuente editorial',
+                'url': 'https://example.com/editorial',
+            },
+            format='json',
+        )
+        source_update = self.client.patch(
+            f'/sources/{source.data["id"]}/',
+            {'publisher': 'Redacción'},
+            format='json',
+        )
+        source_delete = self.client.delete(f'/sources/{source.data["id"]}/')
+        tag_delete = self.client.delete(f'/tags/{tag.data["id"]}/')
+
+        self.assertEqual(tag.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(tag_update.status_code, status.HTTP_200_OK)
+        self.assertEqual(source.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(source_update.status_code, status.HTTP_200_OK)
+        self.assertEqual(source_delete.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(tag_delete.status_code, status.HTTP_204_NO_CONTENT)
 
 
 class AuthApiTests(APITestCase):

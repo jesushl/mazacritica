@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Note, Source, Tag
+from .permissions import IsEditor, user_is_editor
 from .serializers import (
     NoteSerializer,
     RegisterSerializer,
@@ -88,7 +89,11 @@ class MeView(APIView):
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsEditor()]
+        return [permissions.AllowAny()]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -103,19 +108,28 @@ class TagViewSet(viewsets.ModelViewSet):
 class SourceViewSet(viewsets.ModelViewSet):
     queryset = Source.objects.all()
     serializer_class = SourceSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsEditor()]
+        return [permissions.AllowAny()]
 
 
 class NoteViewSet(viewsets.ModelViewSet):
     serializer_class = NoteSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsEditor()]
+        return [permissions.AllowAny()]
 
     def get_queryset(self):
         queryset = Note.objects.select_related(
             'source',
             'author',
         ).prefetch_related('tags')
-        if not self.request.user.is_authenticated:
+        editor = user_is_editor(self.request.user)
+        if not editor:
             queryset = queryset.filter(status=Note.EditorialStatus.PUBLISHED)
 
         tag = self.request.query_params.get('tag')
@@ -125,7 +139,7 @@ class NoteViewSet(viewsets.ModelViewSet):
             )
 
         status_filter = self.request.query_params.get('status')
-        if self.request.user.is_authenticated and status_filter:
+        if status_filter:
             queryset = queryset.filter(status=status_filter)
 
         date_from = self.request.query_params.get('date_from')
