@@ -1324,3 +1324,85 @@
     margin-left: 45px;
   }
 }
+
+.auth-panel,
+.note-composer,
+.comment-composer,
+.postal-search {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 28px;
+  padding: 18px;
+  background: #fffdf9;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.auth-panel label,
+.note-composer label,
+.comment-composer label,
+.postal-search label,
+.comment form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: left;
+}
+
+.auth-panel input,
+.note-composer input,
+.note-composer textarea,
+.comment-composer textarea,
+.postal-search input,
+.comment form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.auth-panel button,
+.note-composer button,
+.comment-composer button,
+.postal-search button,
+.comment form button[type='submit'] {
+  justify-self: start;
+  padding: 10px 14px;
+  color: var(--paper);
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+}
+
+.comment-reply {
+  margin-top: 12px;
+  margin-left: 12px;
+}
+
+.postal-result ul {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.postal-result li {
+  display: grid;
+  gap: 2px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.postal-result small,
+.postal-result p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.topbar {
+  gap: 10px;
+}
