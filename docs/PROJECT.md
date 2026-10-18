@@ -97,14 +97,34 @@ Tag    N ─── N Note
 User   1 ─── N Note
 ```
 
-## 5. Reglas de visibilidad
+## 5. Roles, autenticación y visibilidad
 
-- Visitantes: pueden consultar notas publicadas.
-- Usuarios autenticados: pueden consultar notas y operar sobre el contenido permitido por la API actual.
-- Editores: serán el rol responsable de crear y publicar notas.
-- Comentadores: podrán comentar cuando se implemente la autenticación y el modelo de comentarios.
+El alcance definido separa cuatro roles. El visitante no tiene cuenta. Los otros tres se asignan con grupos de Django llamados exactamente `member`, `editor` y `moderator`.
 
-La autorización editorial todavía necesita una política específica de roles. El modelo actual usa el usuario estándar de Django y permisos generales de DRF como base inicial.
+| Rol | Grupo | Lectura | Escritura |
+|---|---|---|---|
+| Visitante | ninguno | Notas publicadas y comentarios visibles | Ninguna |
+| Miembro | `member` | Notas publicadas y comentarios visibles | Solo comentarios sobre una nota existente |
+| Editor | `editor` | Notas en cualquier estado editorial | Crear, editar, publicar, archivar y eliminar notas, etiquetas y fuentes |
+| Moderador | `moderator` | Cola de moderación cuando exista | Acciones de moderación previstas |
+
+La autenticación de la API será `TokenAuthentication` de Django REST Framework, conservando también la autenticación de sesión. El registro (`POST /register/`) recibe `email`, `password` y `nickname`, crea el usuario con `username` igual al nickname normalizado, contraseña hasheada y perfil `UserProfile`, y lo agrega al grupo `member`. El nickname es único, se guarda en minúsculas, mide de 3 a 30 caracteres y cumple `[a-z0-9_]`.
+
+`POST /login/` acepta correo y contraseña, o nombre de usuario y contraseña, y responde `{token, nickname, email, groups}`. Las credenciales incorrectas responden `401`. `POST /logout/` exige token y lo elimina con `204`. `GET /me/` exige token y responde `id`, `email`, `nickname` y `groups`.
+
+Los borradores quedan ocultos para visitantes y miembros. Una nota publicada exige `published_at`. El autor se fuerza al editor autenticado.
+
+## 5.1 Conversación de dos niveles
+
+La conversación replica el límite de Facebook: exactamente dos niveles.
+
+- Un comentario es de primer nivel cuando `parent` es nulo.
+- Una respuesta es un comentario cuyo `parent` es un comentario de primer nivel de la misma nota.
+- Una respuesta no puede tener respuestas.
+- La API responde `400` si `parent` es a su vez una respuesta o si `parent` pertenece a otra nota.
+- La lectura pública devuelve comentarios de primer nivel visibles y, anidados o asociados, solo sus respuestas directas visibles.
+
+Cada comentario guarda una instantánea del nickname. El estado inicial es `pending`. Quien no modera solo lee comentarios visibles. Los modelos previstos son `Comment`, `CommentReport` y `ModerationAction`. Una persona del grupo `member` no puede crear notas.
 
 ## 6. Frontend actual
 
@@ -144,7 +164,7 @@ Entidades previstas:
 - `ElectionZone`
 - `PostalCodeZoneMapping`
 
-El código postal servirá como entrada para la búsqueda. La candidatura aplicable debe determinarse mediante una relación oficial y fechada con una zona electoral. Un código postal puede relacionarse con más de una zona.
+El código postal es la entrada de búsqueda. La elegibilidad la decide `PostalCodeZoneMapping`: una correspondencia oficial, con fecha de vigencia, entre un `PostalCode` y una `ElectionZone`. Un código postal puede mapear a varias zonas y, por tanto, a varias candidaturas aplicables. La zona oficial no se infiere solo por el texto del código postal.
 
 ### Comentarios
 
@@ -154,7 +174,15 @@ Entidades previstas:
 - `CommentReport`
 - `ModerationAction`
 
-Los comentarios deben pertenecer a una nota, mostrar nickname y conservar un estado de moderación. Las notas continuarán siendo exclusivas de editores.
+Un comentario pertenece a una nota y guarda el nickname como instantánea. Empieza en `pending`. La lectura pública solo incluye comentarios visibles.
+
+La profundidad es exactamente dos niveles. `parent` nulo significa comentario de primer nivel. Una respuesta apunta a un comentario de primer nivel de la misma nota. Si el padre ya es una respuesta, o si el padre pertenece a otra nota, la operación se rechaza con `400`. El público ve los comentarios de primer nivel visibles y sus respuestas directas visibles. No existe un tercer nivel.
+
+Las notas, etiquetas y fuentes siguen siendo exclusivas del grupo `editor`. El miembro registrado solo comenta.
+
+### Datos de demostración
+
+El comando `python manage.py seed_demo_data` cargará un conjunto ficticio y determinista de usuarios, notas, comentarios y relaciones electorales. Los mismos datos de entrada deben producir el mismo resultado. Esos registros no representan personas ni procesos reales.
 
 ## 8. Política de etiquetas sensibles
 
@@ -181,12 +209,11 @@ Toda nota debe diferenciar hechos documentados, denuncias, investigaciones, aná
 
 ## 10. Limitaciones conocidas
 
-- No existe autenticación completa para el frontend.
-- No existe un modelo de comentarios en el backend.
-- El rol editorial aún no está separado del usuario estándar.
+- La autenticación por token, el perfil y los grupos `member`, `editor` y `moderator` están definidos y pendientes de implementación.
+- No existe todavía un modelo de comentarios. Cuando se implemente, las pruebas del límite de dos niveles deben escribirse antes que el modelo y la API.
 - El frontend no consume `/notes/`, `/tags/` ni `/sources/`.
 - No hay integración de publicación con plataformas sociales.
-- La base electoral todavía es diseño, no implementación.
+- La base electoral y `seed_demo_data` están definidos y todavía no implementados.
 - La configuración de estáticos de Django conserva referencias históricas a Webpack mientras el frontend usa Vite.
 
 ## 11. Compatibilidad de Python

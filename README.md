@@ -19,8 +19,74 @@ El proyecto se encuentra en una etapa de prototipo funcional:
 - El backend Django ya tiene modelos, migraciones y API para notas, etiquetas y fuentes.
 - El frontend React/Vite tiene una portada editorial, filtros, búsqueda, detalle de nota, variantes sociales simuladas y comentarios simulados.
 - La integración entre el frontend y la API todavía no está realizada.
-- La autenticación y la persistencia de comentarios todavía no están implementadas.
+- La autenticación por token, los perfiles, los comentarios, la moderación, la base electoral y el comando `seed_demo_data` están definidos como alcance de implementación y todavía no están construidos.
 - La sección del Poder Judicial y la base electoral están definidas en diseño, pero aún no tienen modelos ni endpoints.
+
+## Alcance definido: API editorial y cívica autenticada
+
+Este es el contrato de la implementación que sigue. No describe el frontend React ni afirma que los modelos de comentarios o elecciones ya existan.
+
+### Roles
+
+Los roles de producto son visitante, miembro, editor y moderador.
+
+| Rol | Cómo se reconoce | Puede |
+|---|---|---|
+| Visitante | Solicitud sin autenticar | Leer notas publicadas y comentarios visibles |
+| Miembro | Grupo de Django `member` | Comentar una nota existente. No crea ni edita notas, etiquetas ni fuentes |
+| Editor | Grupo de Django `editor` | Crear, editar, publicar, archivar y eliminar notas, etiquetas y fuentes |
+| Moderador | Grupo de Django `moderator` | Actuar sobre la cola de moderación cuando esa API exista |
+
+Los grupos se llaman exactamente `editor`, `moderator` y `member`. El registro de una cuenta crea el usuario y lo agrega al grupo `member`.
+
+### Autenticación
+
+La API usa `TokenAuthentication` de Django REST Framework, además de la autenticación de sesión ya prevista por DRF.
+
+| Método | Ruta | Cuerpo | Resultado |
+|---|---|---|---|
+| `POST` | `/register/` | `email`, `password`, `nickname` | Crea el usuario con `username` igual al nickname normalizado, correo, contraseña hasheada y perfil. `400` si el correo o el nickname ya existen o si el nickname es inválido |
+| `POST` | `/login/` | `email` y `password`, o `username` y `password` | `{token, nickname, email, groups}`. `401` si las credenciales no coinciden |
+| `POST` | `/logout/` | Token obligatorio | Elimina el token. `204` |
+| `GET` | `/me/` | Token obligatorio | `id`, `email`, `nickname`, `groups` |
+
+El nickname es único, se guarda en minúsculas, tiene de 3 a 30 caracteres y solo admite el patrón `[a-z0-9_]`.
+
+### Contenido editorial
+
+Solo quien pertenece al grupo `editor` puede crear, editar, publicar, archivar o eliminar notas, etiquetas y fuentes. Una persona registrada no puede crear notas. Las notas publicadas exigen `published_at`. El autor de una nota es siempre el editor autenticado. Los borradores quedan ocultos para visitantes y miembros.
+
+### Conversación
+
+La conversación sigue el modelo de Facebook y tiene exactamente dos niveles:
+
+- Un comentario es de primer nivel (`parent` nulo) o una respuesta directa a un comentario de primer nivel.
+- Una respuesta no puede tener respuestas.
+- Si `parent` es a su vez una respuesta, o si `parent` pertenece a otra nota, la API responde `400`.
+- Quien lee en público ve solo los comentarios de primer nivel visibles y sus respuestas directas visibles.
+
+Las personas registradas comentan con una instantánea del nickname. Los comentarios nuevos empiezan en estado `pending`. La lectura pública solo incluye comentarios visibles.
+
+Modelos previstos: `Comment`, `CommentReport` y `ModerationAction`.
+
+### Base cívica y datos de demostración
+
+Modelos previstos: `Election`, `Office`, `Candidate`, `Candidacy`, `PostalCode`, `ElectionZone` y `PostalCodeZoneMapping`.
+
+El código postal es la entrada de búsqueda. Una correspondencia oficial y fechada entre código postal y zona decide la elegibilidad. Un código postal puede corresponder a varias zonas.
+
+El comando de gestión `seed_demo_data` cargará datos ficticios y deterministas. No representa personas, procesos ni resultados reales.
+
+### Etiquetas de estado
+
+Las etiquetas de estado usan lenguaje neutral:
+
+- `Señalamiento`
+- `Denuncia presentada`
+- `Investigación en curso`
+- `Presunta irregularidad`
+- `Proceso judicial`
+- `Resolución firme`
 
 ## Arquitectura
 
@@ -90,14 +156,23 @@ Las rutas se sirven desde el backend Django:
 
 | Método | Ruta | Propósito |
 |---|---|---|
-| `POST` | `/register/` | Crear un usuario |
-| `GET` | `/notes/` | Listar notas visibles |
-| `POST` | `/notes/` | Crear una nota autenticada |
-| `GET` | `/notes/<id>/` | Consultar una nota |
-| `PUT/PATCH` | `/notes/<id>/` | Actualizar una nota autenticada |
-| `DELETE` | `/notes/<id>/` | Eliminar una nota autenticada |
+| `POST` | `/register/` | Crear cuenta, perfil y membresía del grupo `member` |
+| `POST` | `/login/` | Obtener token, nickname, correo y grupos |
+| `POST` | `/logout/` | Invalidar el token |
+| `GET` | `/me/` | Consultar la cuenta autenticada |
+| `GET` | `/notes/` | Listar notas visibles según el rol |
+| `POST` | `/notes/` | Crear una nota; solo el grupo `editor` |
+| `GET` | `/notes/<id>/` | Consultar una nota visible |
+| `PUT/PATCH` | `/notes/<id>/` | Editar, publicar o archivar una nota; solo el grupo `editor` |
+| `DELETE` | `/notes/<id>/` | Eliminar una nota; solo el grupo `editor` |
 | `GET` | `/tags/` | Listar etiquetas |
+| `POST` | `/tags/` | Crear una etiqueta; solo el grupo `editor` |
+| `PUT/PATCH` | `/tags/<id>/` | Editar una etiqueta; solo el grupo `editor` |
+| `DELETE` | `/tags/<id>/` | Eliminar una etiqueta; solo el grupo `editor` |
 | `GET` | `/sources/` | Listar fuentes |
+| `POST` | `/sources/` | Crear una fuente; solo el grupo `editor` |
+| `PUT/PATCH` | `/sources/<id>/` | Editar una fuente; solo el grupo `editor` |
+| `DELETE` | `/sources/<id>/` | Eliminar una fuente; solo el grupo `editor` |
 
 Filtros de notas:
 
@@ -108,25 +183,35 @@ Filtros de notas:
 /notes/?search=transparencia
 ```
 
-Las personas no autenticadas solo reciben notas publicadas. Las notas publicadas requieren fecha de publicación.
+Las personas no autenticadas y los miembros solo reciben notas publicadas. Las notas publicadas requieren fecha de publicación. Los borradores solo son visibles para el grupo `editor`.
 
 ## Modelo de contenido
+
+Implementado:
 
 - `Note`: nota editorial creada por un editor.
 - `Tag`: etiqueta relacional de tema o estado.
 - `Source`: fuente documental de una nota.
-- `User`: usuario estándar de Django; será la base para futuras cuentas de comentaristas y editores.
+- `User`: usuario estándar de Django.
+
+Definido para la implementación siguiente:
+
+- `UserProfile`: perfil uno a uno con nickname normalizado.
+- `Comment`, `CommentReport`, `ModerationAction`.
+- `Election`, `Office`, `Candidate`, `Candidacy`, `PostalCode`, `ElectionZone`, `PostalCodeZoneMapping`.
 
 Una nota puede tener múltiples etiquetas y una etiqueta puede relacionarse con múltiples notas. Una fuente puede tener múltiples notas y no puede eliminarse mientras existan notas que la utilicen.
 
 ## Principios editoriales y de producto
 
-1. Las notas solo las crean y publican editores de MazaCrítica.
-2. La comunidad conversa alrededor de las notas mediante comentarios con nickname.
-3. Las fuentes, fechas y estados deben ser visibles.
-4. Una etiqueta de investigación no equivale a una condena.
-5. Facebook, Instagram y TikTok son canales de presentación de la misma nota editorial.
-6. El código postal será una entrada de búsqueda electoral, pero la zona oficial será la relación territorial verificable.
+1. Las notas, etiquetas y fuentes solo las crean, editan, publican, archivan o eliminan personas del grupo `editor`.
+2. Una persona registrada no crea notas. Solo puede comentar una nota existente, con una instantánea de su nickname.
+3. La conversación tiene exactamente dos niveles, al estilo de Facebook: comentario de primer nivel o respuesta directa a ese comentario. Una respuesta no admite otra respuesta.
+4. Los comentarios nuevos quedan pendientes. El público solo lee comentarios visibles y, en el segundo nivel, solo las respuestas directas visibles.
+5. Las fuentes, fechas y estados deben ser visibles.
+6. Una etiqueta de investigación no equivale a una condena.
+7. Facebook, Instagram y TikTok son canales de presentación de la misma nota editorial.
+8. El código postal es la entrada de búsqueda electoral. La elegibilidad la decide una correspondencia oficial y fechada con la zona. Un código postal puede mapear a varias zonas.
 
 ## Documentación relacionada
 
