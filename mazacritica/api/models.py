@@ -103,3 +103,100 @@ class Note(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Comment(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pendiente'
+        VISIBLE = 'visible', 'Visible'
+        REJECTED = 'rejected', 'Rechazado'
+
+    note = models.ForeignKey(
+        Note,
+        on_delete=models.CASCADE,
+        related_name='comments',
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='comments',
+    )
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='replies',
+    )
+    nickname = models.CharField(max_length=30)
+    body = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+
+    def __str__(self):
+        return f'{self.nickname}: {self.body[:40]}'
+
+
+class CommentReport(models.Model):
+    class Status(models.TextChoices):
+        OPEN = 'open', 'Abierto'
+        CLOSED = 'closed', 'Cerrado'
+
+    comment = models.ForeignKey(
+        Comment,
+        on_delete=models.CASCADE,
+        related_name='reports',
+    )
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='comment_reports',
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.OPEN,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['comment', 'reporter'],
+                condition=models.Q(status='open'),
+                name='unique_open_comment_report_per_member',
+            ),
+        ]
+
+    def __str__(self):
+        return f'Reporte de {self.reporter_id} sobre {self.comment_id}'
+
+
+class ModerationAction(models.Model):
+    class Status(models.TextChoices):
+        VISIBLE = 'visible', 'Visible'
+        REJECTED = 'rejected', 'Rechazado'
+
+    comment = models.ForeignKey(
+        Comment,
+        on_delete=models.CASCADE,
+        related_name='moderation_actions',
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='moderation_actions',
+    )
+    status = models.CharField(max_length=20, choices=Status.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.actor_id} marcó {self.comment_id} como {self.status}'

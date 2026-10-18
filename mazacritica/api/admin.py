@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import Note, Source, Tag, UserProfile
+from .models import (
+    Comment,
+    CommentReport,
+    ModerationAction,
+    Note,
+    Source,
+    Tag,
+    UserProfile,
+)
 
 
 @admin.register(UserProfile)
@@ -22,6 +30,25 @@ class SourceAdmin(admin.ModelAdmin):
     list_display = ('name', 'publisher', 'published_at', 'url')
     search_fields = ('name', 'publisher', 'url')
     list_filter = ('publisher',)
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('nickname', 'note', 'status', 'parent', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('nickname', 'body')
+
+
+@admin.register(CommentReport)
+class CommentReportAdmin(admin.ModelAdmin):
+    list_display = ('comment', 'reporter', 'status', 'created_at')
+    list_filter = ('status',)
+
+
+@admin.register(ModerationAction)
+class ModerationActionAdmin(admin.ModelAdmin):
+    list_display = ('comment', 'actor', 'status', 'created_at')
+    list_filter = ('status',)
 
 
 @admin.register(Note)
