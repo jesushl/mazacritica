@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import Group, User
 from django.utils import timezone
 from rest_framework import status
@@ -318,6 +320,110 @@ class AuthApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(User.objects.count(), 1)
+        self.assertFalse(User.objects.filter(username='ana_02').exists())
+
+    def test_register_rejects_duplicate_email_when_precheck_is_bypassed(self):
+        User.objects.create_user(
+            username='existente',
+            email='ana@example.com',
+            password='password-segura',
+        )
+        real_filter = User.objects.filter
+
+        def filter_without_email_precheck(*args, **kwargs):
+            if set(kwargs) == {'email__iexact'}:
+                return User.objects.none()
+            return real_filter(*args, **kwargs)
+
+        with patch(
+            'api.serializers.User.objects.filter',
+            side_effect=filter_without_email_precheck,
+        ):
+            response = self.client.post(
+                '/register/',
+                {
+                    'email': 'ANA@example.com',
+                    'password': 'password-segura',
+                    'nickname': 'ana_02',
+                },
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(User.objects.filter(username='ana_02').exists())
+        self.assertEqual(
+            User.objects.filter(email__iexact='ana@example.com').count(),
+            1,
+        )
+
+    def test_login_and_me_create_missing_profile(self):
+        user = User.objects.create_user(
+            username='Sin_Perfil',
+            email='sin@example.com',
+            password='password-segura',
+        )
+        admin = User.objects.create_superuser(
+            username='root_admin',
+            email='root@example.com',
+            password='password-segura',
+        )
+        self.assertFalse(UserProfile.objects.filter(user=user).exists())
+        self.assertFalse(UserProfile.objects.filter(user=admin).exists())
+
+        login = self.client.post(
+            '/login/',
+            {'username': 'Sin_Perfil', 'password': 'password-segura'},
+            format='json',
+        )
+        self.assertEqual(login.status_code, status.HTTP_200_OK)
+        self.assertEqual(login.data['nickname'], 'sin_perfil')
+        self.assertTrue(
+            UserProfile.objects.filter(user=user, nickname='sin_perfil').exists()
+        )
+
+        admin_login = self.client.post(
+            '/login/',
+            {'email': 'root@example.com', 'password': 'password-segura'},
+            format='json',
+        )
+        self.assertEqual(admin_login.status_code, status.HTTP_200_OK)
+        self.assertEqual(admin_login.data['nickname'], 'root_admin')
+        self.assertIn('token', admin_login.data)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f'Token {admin_login.data["token"]}',
+        )
+        me = self.client.get('/me/')
+        self.assertEqual(me.status_code, status.HTTP_200_OK)
+        self.assertEqual(me.data['id'], admin.id)
+        self.assertEqual(me.data['nickname'], 'root_admin')
+
+        bare = User.objects.create_user(
+            username='ya_token',
+            email='token@example.com',
+            password='password-segura',
+        )
+        token = Token.objects.create(user=bare)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+        bare_me = self.client.get('/me/')
+        self.assertEqual(bare_me.status_code, status.HTTP_200_OK)
+        self.assertEqual(bare_me.data['nickname'], 'ya_token')
+        self.assertTrue(UserProfile.objects.filter(user=bare).exists())
+
+    def test_login_without_usable_nickname_does_not_issue_token(self):
+        user = User.objects.create_user(
+            username='no',
+            email='corto@example.com',
+            password='password-segura',
+        )
+        response = self.client.post(
+            '/login/',
+            {'username': 'no', 'password': 'password-segura'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
+        self.assertFalse(Token.objects.filter(user=user).exists())
 
     def test_register_rejects_duplicate_nickname(self):
         self.client.post(

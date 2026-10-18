@@ -3,7 +3,7 @@ import re
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from rest_framework import serializers
 
 from .models import Comment, Note, Source, Tag, UserProfile
@@ -43,18 +43,27 @@ class RegisterSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        with transaction.atomic():
-            user = User.objects.create_user(
-                username=validated_data['nickname'],
-                email=validated_data['email'],
-                password=validated_data['password'],
-            )
-            UserProfile.objects.create(
-                user=user,
-                nickname=validated_data['nickname'],
-            )
-            member_group, _created = Group.objects.get_or_create(name='member')
-            user.groups.add(member_group)
+        try:
+            with transaction.atomic():
+                if User.objects.filter(email__iexact=validated_data['email']).exists():
+                    raise serializers.ValidationError({
+                        'email': 'Ese correo ya está registrado.',
+                    })
+                user = User.objects.create_user(
+                    username=validated_data['nickname'],
+                    email=validated_data['email'],
+                    password=validated_data['password'],
+                )
+                UserProfile.objects.create(
+                    user=user,
+                    nickname=validated_data['nickname'],
+                )
+                member_group, _created = Group.objects.get_or_create(name='member')
+                user.groups.add(member_group)
+        except IntegrityError:
+            raise serializers.ValidationError({
+                'email': 'Ese correo ya está registrado.',
+            })
         return user
 
 

@@ -1,6 +1,32 @@
+import re
+
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
+
+NICKNAME_PATTERN = re.compile(r'[a-z0-9_]{3,30}')
+
+
+class ProfileNicknameError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
+def ensure_user_profile(user):
+    try:
+        return user.profile
+    except UserProfile.DoesNotExist:
+        nickname = (user.username or '').strip().lower()
+        if NICKNAME_PATTERN.fullmatch(nickname) is None:
+            raise ProfileNicknameError(
+                'El nombre de usuario no puede usarse como nickname.'
+            )
+        if UserProfile.objects.filter(nickname=nickname).exists():
+            raise ProfileNicknameError('Ese nickname ya está registrado.')
+        profile = UserProfile.objects.create(user=user, nickname=nickname)
+        user.profile = profile
+        return profile
 
 
 class UserProfile(models.Model):

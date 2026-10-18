@@ -2,12 +2,21 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, serializers, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Comment, CommentReport, ModerationAction, Note, Source, Tag
+from .models import (
+    Comment,
+    CommentReport,
+    ModerationAction,
+    Note,
+    ProfileNicknameError,
+    Source,
+    Tag,
+    ensure_user_profile,
+)
 from .permissions import (
     IsEditor,
     IsMemberOrEditor,
@@ -26,6 +35,19 @@ from .serializers import (
 )
 
 
+def _user_for_login(email, username):
+    if email:
+        lookup = {'email__iexact': str(email)}
+    elif username:
+        lookup = {'username__iexact': str(username)}
+    else:
+        return None
+    try:
+        return User.objects.get(**lookup)
+    except (User.DoesNotExist, User.MultipleObjectsReturned):
+        return None
+
+
 def _account_payload(user, token):
     return {
         'token': token.key,
@@ -41,7 +63,10 @@ class RegisterView(APIView):
     def post(self, request, format=None):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            try:
+                user = serializer.save()
+            except serializers.ValidationError as exc:
+                return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
             return Response(
                 {
                     'id': user.id,
@@ -60,11 +85,7 @@ class LoginView(APIView):
         email = request.data.get('email')
         username = request.data.get('username')
         password = request.data.get('password') or ''
-        user = None
-        if email:
-            user = User.objects.filter(email__iexact=str(email)).first()
-        elif username:
-            user = User.objects.filter(username__iexact=str(username)).first()
+        user = _user_for_login(email, username)
         if (
             user is None
             or not user.is_active
@@ -73,6 +94,13 @@ class LoginView(APIView):
             return Response(
                 {'detail': 'Credenciales inválidas.'},
                 status=status.HTTP_401_UNAUTHORIZED,
+            )
+        try:
+            ensure_user_profile(user)
+        except ProfileNicknameError as exc:
+            return Response(
+                {'detail': exc.message},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         token, _created = Token.objects.get_or_create(user=user)
         return Response(_account_payload(user, token))
@@ -91,6 +119,13 @@ class MeView(APIView):
 
     def get(self, request, format=None):
         user = request.user
+        try:
+            ensure_user_profile(user)
+        except ProfileNicknameError as exc:
+            return Response(
+                {'detail': exc.message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response({
             'id': user.id,
             'email': user.email,
