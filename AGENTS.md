@@ -19,8 +19,8 @@ Dirección social intensa con base editorial cívica: una interfaz dinámica, de
 ## Current Phase
 
 **Milestone:** v0.1 — Experiencia social de noticias
-**Phase:** 1 — Sistema visual y feed editorial
-**Status:** implemented locally and connected to the API
+**Phase:** 2 — Responsive y accesibilidad
+**Status:** phase 2 responsive and accessibility implemented locally
 **Last updated:** 2026-10-17
 
-La portada ya lee la API. En local están la autenticación por token, los permisos de editor, los comentarios de dos niveles, las elecciones por código postal y la semilla ficticia. Sigue pendiente la fase 2 de responsive y accesibilidad. `DEBUG` y `SECRET_KEY` siguen como deuda de producción.
+La portada ya lee la API. En local están la autenticación por token, los permisos de editor, los comentarios de dos niveles, las elecciones por código postal y la semilla ficticia. El feed editorial se adapta a 1120px y 760px sin esconder la navegación ni la búsqueda por código postal. `DEBUG` y `SECRET_KEY` siguen como deuda de producción.

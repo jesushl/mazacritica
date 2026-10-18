@@ -37,7 +37,10 @@ button {
 }
 
 button:focus-visible,
-input:focus-visible {
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
   outline: 2px solid var(--coral);
   outline-offset: 3px;
 }

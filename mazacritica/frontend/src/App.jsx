@@ -72,6 +72,7 @@ function App() {
   const [postalCode, setPostalCode] = useState('')
   const [postalResult, setPostalResult] = useState(null)
   const [loadError, setLoadError] = useState('')
+  const [catalogReady, setCatalogReady] = useState(false)
   const lastScrollY = useRef(0)
 
   useEffect(() => {
@@ -103,9 +104,13 @@ function App() {
           setTags(tagList)
           setSources(sourceList)
           setLoadError('')
+          setCatalogReady(true)
         }
       } catch {
-        if (!cancelled) setLoadError('No pudimos cargar las notas publicadas.')
+        if (!cancelled) {
+          setLoadError('No pudimos cargar las notas publicadas.')
+          setCatalogReady(true)
+        }
       }
     }
     load()
@@ -257,10 +262,14 @@ function App() {
   }
 
   const editor = isEditor(account)
+  const emptyFeedMessage = catalogReady && !selectedNote && !loadError && filteredNotes.length === 0
+    ? 'No encontramos esa nota. Prueba con otra palabra o quita el filtro para ampliar la búsqueda.'
+    : ''
+  const statusMessage = notice || loadError || emptyFeedMessage
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className="sidebar" aria-label="Navegación">
         <div className="brand-lockup">
           <div className="brand-mark" aria-hidden="true">M</div>
           <div>
@@ -302,7 +311,10 @@ function App() {
       </aside>
 
       <main className="main-column">
-        <header className={headerVisible ? 'topbar' : 'topbar is-hidden'}>
+        <header
+          className={headerVisible ? 'topbar' : 'topbar is-hidden'}
+          {...(headerVisible ? {} : { inert: '' })}
+        >
           <div className="mobile-brand">Maza<span>Crítica</span></div>
           <label className="search-box">
             <span aria-hidden="true">⌕</span>
@@ -379,7 +391,7 @@ function App() {
           </form>
         )}
 
-        {loadError && <p role="alert">{loadError}</p>}
+        {loadError && <p>{loadError}</p>}
 
         {selectedNote ? (
           <article className={`note-detail accent-${accents[notes.indexOf(selectedNote) % accents.length]}`}>
@@ -529,7 +541,7 @@ function App() {
                 </button>
               ))}
             </section>
-            <section className="feed" aria-live="polite">
+            <section className="feed">
               {filteredNotes.length ? filteredNotes.map((note, index) => (
                 <article className={`note-card accent-${accents[index % accents.length]}`} key={note.id}>
                   <div className="note-meta">
@@ -576,9 +588,9 @@ function App() {
         )}
       </main>
 
-      <aside className="right-rail">
+      <aside className="right-rail" aria-label="Contexto editorial">
         <section className="rail-module">
-          <span className="eyebrow">CÓDIGO POSTAL</span>
+          <h2 className="eyebrow">Código postal</h2>
           <form className="postal-search" onSubmit={submitPostalSearch}>
             <label>
               Código postal
@@ -601,7 +613,7 @@ function App() {
           )}
         </section>
         <section className="rail-module principles-module">
-          <span className="eyebrow">NUESTRA REGLA</span>
+          <h2 className="eyebrow">Nuestra regla</h2>
           <p>Una sospecha no es una sentencia.</p>
           <span className="principles-line" />
           <small>Señalamos el estado de la información para que puedas formar tu propio criterio.</small>
@@ -614,7 +626,7 @@ function App() {
           <small>© 2026 MazaCrítica</small>
         </footer>
       </aside>
-      {notice && <div className="toast" role="status">{notice}</div>}
+      <div className={notice ? 'toast' : 'live-status'} role="status">{statusMessage}</div>
     </div>
   )
 }
