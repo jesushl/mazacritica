@@ -1,56 +1,52 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { contourColors } from './districtColor'
 
 const mexico = [23.6, -102.5]
 
-/* eslint-disable react/prop-types -- el mapa recibe el municipio ya resuelto */
-export default function DistrictMap({ municipio, estado }) {
+/* eslint-disable react/prop-types -- el mapa recibe las zonas ya resueltas */
+export default function DistrictMap({ municipio, zones, color }) {
   const node = useRef(null)
-  const [status, setStatus] = useState('Buscando el municipio en el mapa.')
+  const polygons = (zones || []).map((zone) => zone.poligono).filter(Boolean)
+  const polygonKey = polygons
+    .map((feature) => `${feature.properties.circuito_j}-${feature.properties.distrito_j}`)
+    .join('|')
+  const polygonsRef = useRef(polygons)
+  polygonsRef.current = polygons
+  const colorRef = useRef(color)
+  colorRef.current = color
+  const [status, setStatus] = useState('Cargando el mapa.')
 
   useEffect(() => {
+    const features = polygonsRef.current
     const map = L.map(node.current, { scrollWheelZoom: false }).setView(mexico, 5)
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
       maxZoom: 18,
     }).addTo(map)
-    const query = new URLSearchParams({
-      format: 'jsonv2',
-      limit: '1',
-      countrycodes: 'mx',
-      q: `${municipio}, ${estado}, México`,
-    })
-    let cancelled = false
-    fetch(`https://nominatim.openstreetmap.org/search?${query}`, {
-      headers: { 'Accept-Language': 'es' },
-    })
-      .then((response) => (response.ok ? response.json() : []))
-      .then((places) => {
-        if (cancelled) return
-        const place = places[0]
-        if (!place) {
-          setStatus('No encontramos ese municipio en el mapa.')
-          return
-        }
-        const point = [Number(place.lat), Number(place.lon)]
-        L.circleMarker(point, {
-          radius: 9,
-          color: '#e55943',
-          fillColor: '#e55943',
-          fillOpacity: 0.9,
-        }).addTo(map)
-        map.setView(point, 11)
-        setStatus(`Marca de ${municipio}. El mapa no dibuja el contorno del distrito.`)
-      })
-      .catch(() => {
-        if (!cancelled) setStatus('No pudimos cargar el mapa del municipio.')
-      })
-    return () => {
-      cancelled = true
-      map.remove()
+    if (features.length) {
+      const layer = L.geoJSON(
+        { type: 'FeatureCollection', features },
+        {
+          style: (feature) => {
+            const index = features.indexOf(feature)
+            const paint = colorRef.current || contourColors[(index < 0 ? 0 : index) % contourColors.length]
+            return { color: paint, weight: 2, fillColor: paint, fillOpacity: 0.35 }
+          },
+        },
+      ).addTo(map)
+      map.fitBounds(layer.getBounds(), { padding: [16, 16] })
+      setStatus(
+        features.length > 1
+          ? 'Contornos del INE. Este municipio toca más de un distrito judicial; se muestran todos.'
+          : 'Contorno del distrito judicial publicado por el INE.',
+      )
+    } else {
+      setStatus('No hay contorno del INE para estos distritos.')
     }
-  }, [municipio, estado])
+    return () => map.remove()
+  }, [municipio, polygonKey, color])
 
   return (
     <div className="district-map-block">

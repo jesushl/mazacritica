@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from api.models import Candidacy, Note, Office, PostalCodeZoneMapping
 
 from .models import NoteMention
+from .poligonos import poligonos_de
 from .regiones import buscar_codigo_postal
 
 
@@ -89,10 +90,14 @@ class DistrictView(APIView):
 
 def _official_district_payload(found):
     municipio = found['municipio_sepomex']
+    poligonos = poligonos_de(
+        (district['circuito']['numero'], district['numero'])
+        for district in found['distritos']
+    )
     zones = []
     for district in found['distritos']:
         entidad = found['municipio']['entidad']
-        zones.append({
+        zone = {
             'id': f'{entidad}-{district["numero"]}',
             'name': f'Distrito judicial {district["numero"]}',
             'code': f'DJ-{entidad}-{district["numero"]}',
@@ -100,7 +105,11 @@ def _official_district_payload(found):
             'valid_to': found['vigencia'],
             'source': district['circuito']['nombre'],
             'secciones': district['secciones'],
-        })
+        }
+        feature = poligonos.get((district['circuito']['numero'], district['numero']))
+        if feature is not None:
+            zone['poligono'] = feature
+        zones.append(zone)
     if zones:
         detail = ''
     elif found['municipio'] is None:

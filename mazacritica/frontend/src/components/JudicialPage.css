@@ -13,6 +13,59 @@
   font-size: 14px;
 }
 
+.district-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration-line: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.district-detail a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.district-detail h2 {
+  margin: 4px 0 6px;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 0.95;
+}
+
+.district-detail-code {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.district-detail dl {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 0;
+}
+
+.district-detail dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.district-detail dd {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.district-detail h3 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
 .postal-result small,
 .postal-result p {
   color: var(--muted);

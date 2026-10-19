@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
+import DistrictDetail from './DistrictDetail'
 import DistrictMap from './DistrictMap'
+import { contourColor, zoneKey } from './districtColor'
 import './JudicialPage.css'
 
 /* eslint-disable react/prop-types -- el distrito llega de la búsqueda por código postal */
@@ -9,6 +12,14 @@ export default function JudicialPage({
   onSearch,
   onOpenNote,
 }) {
+  const [selectedKey, setSelectedKey] = useState(null)
+  const zones = postalResult?.zones || []
+  const selected = zones.find((zone) => zoneKey(zone) === selectedKey) || null
+
+  useEffect(() => {
+    setSelectedKey(null)
+  }, [postalResult])
+
   return (
     <section className="judicial-page" aria-labelledby="judicial-title">
       <p className="eyebrow">Poder Judicial</p>
@@ -34,23 +45,48 @@ export default function JudicialPage({
           {postalResult.asentamientos?.length > 0 && (
             <p>{postalResult.asentamientos.map((item) => item.nombre).join(' · ')}</p>
           )}
-          {postalResult.municipio && (
-            <DistrictMap municipio={postalResult.municipio} estado={postalResult.estado} />
+          {postalResult.municipio && !selected && (
+            <DistrictMap municipio={postalResult.municipio} zones={zones} />
           )}
+          {selected ? (
+            <DistrictDetail
+              zone={selected}
+              zones={zones}
+              municipio={postalResult.municipio}
+              estado={postalResult.estado}
+              aspirantes={postalResult.aspirantes}
+              onBack={() => setSelectedKey(null)}
+              onOpenNote={onOpenNote}
+            />
+          ) : (
           <ul aria-label="Zonas del código postal">
-            {postalResult.zones.map((zone) => (
-              <li key={`${zone.code}-${zone.valid_from}`}>
-                {zone.name} · {zone.code}
-                <small>
-                  {zone.secciones
-                    ? `${zone.source} · ${zone.secciones} secciones`
-                    : `${zone.valid_from} – ${zone.valid_to}`}
-                </small>
-              </li>
-            ))}
+            {zones.map((zone) => {
+              const color = contourColor(zones, zone)
+              return (
+                <li key={zoneKey(zone)}>
+                  <a
+                    className="district-link"
+                    href={`#distrito-${zoneKey(zone)}`}
+                    style={color ? { color } : undefined}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      setSelectedKey(zoneKey(zone))
+                    }}
+                  >
+                    {zone.name} · {zone.code}
+                  </a>
+                  <small>
+                    {zone.secciones
+                      ? `${zone.source} · ${zone.secciones} secciones`
+                      : `${zone.valid_from} – ${zone.valid_to}`}
+                  </small>
+                </li>
+              )
+            })}
           </ul>
-          {postalResult.zones.length === 0 && <p>{postalResult.detail}</p>}
-          <div className="aspirant-list">
+          )}
+          {zones.length === 0 && <p>{postalResult.detail}</p>}
+          {!selected && <div className="aspirant-list">
             {(postalResult.aspirantes || []).map((aspirante) => (
               <article className="aspirant-card" key={`${aspirante.id}-${aspirante.office}-${aspirante.zone.code}`}>
                 <h2>{aspirante.name}</h2>
@@ -72,7 +108,7 @@ export default function JudicialPage({
                 )}
               </article>
             ))}
-          </div>
+          </div>}
         </div>
       )}
     </section>
