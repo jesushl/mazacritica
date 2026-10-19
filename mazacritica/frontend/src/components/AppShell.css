@@ -1,0 +1,371 @@
+.sidebar {
+  display: flex;
+  position: sticky;
+  top: 20px;
+  flex-direction: column;
+  height: calc(100vh - 20px);
+  padding: 34px 0 24px;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 58px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 35px;
+  height: 35px;
+  place-items: center;
+  color: #f4f0e9;
+  background: #211e1b;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  transform: rotate(-7deg);
+}
+
+.brand-name {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.brand-kicker {
+  display: block;
+  margin-top: 2px;
+  color: #766f67;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.primary-nav {
+  display: grid;
+  gap: 5px;
+}
+
+.nav-accordion {
+  border-top: 1px solid var(--line);
+}
+
+.nav-accordion summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.nav-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-accordion summary:hover {
+  color: var(--ink);
+}
+
+.accordion-chevron {
+  color: var(--coral);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  transition: transform 180ms ease-out;
+}
+
+.nav-accordion:not([open]) .accordion-chevron {
+  transform: rotate(-90deg);
+}
+
+.nav-item,
+.text-nav-item {
+  display: flex;
+  align-items: center;
+  border: 0;
+  color: #766f67;
+  background: transparent;
+  text-align: left;
+}
+
+.nav-item {
+  gap: 13px;
+  padding: 11px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nav-item span:first-child {
+  width: 20px;
+  color: #968d83;
+  font-size: 20px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.nav-item.is-active {
+  color: #211e1b;
+  background: #e7ded2;
+}
+
+.nav-item.is-active span:first-child {
+  color: #e55943;
+}
+
+.nav-count {
+  min-width: 18px;
+  margin-left: auto;
+  color: #e55943;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-align: right;
+}
+
+.sidebar-rule {
+  height: 1px;
+  margin: 38px 12px 24px;
+  background: #d8d0c6;
+}
+
+.nav-label,
+.eyebrow {
+  margin: 0;
+  color: #766f67;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.nav-label {
+  padding: 0 12px;
+  margin-bottom: 16px;
+}
+
+.text-nav-item {
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.text-nav-item:hover,
+.nav-item:hover {
+  color: #211e1b;
+}
+
+.nav-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dot-coral { background: #e55943; }
+.dot-blue { background: #3e63a9; }
+.dot-ochre { background: #c48b34; }
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 16px 5px 0;
+  border-top: 1px solid #d8d0c6;
+}
+
+.profile-avatar,
+.source-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #f4f0e9;
+  background: #211e1b;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+}
+
+.profile-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+.sidebar-footer strong,
+.sidebar-footer span {
+  display: block;
+}
+
+.sidebar-footer strong {
+  font-size: 11px;
+}
+
+.sidebar-footer span {
+  margin-top: 2px;
+  color: #766f67;
+  font-size: 10px;
+}
+
+.more-button {
+  margin-left: auto;
+  border: 0;
+  color: #766f67;
+  background: transparent;
+  letter-spacing: 1px;
+}
+
+.right-rail {
+  padding: 123px 0 40px;
+}
+
+.rail-module {
+  padding: 22px 0 25px;
+  border-top: 1px solid #d8d0c6;
+}
+
+.module-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.module-heading .signal-dot {
+  width: 6px;
+  height: 6px;
+  margin: 0;
+}
+
+.pulse-number {
+  margin: 20px 0 0;
+  color: #e55943;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 60px;
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.1em;
+}
+
+.pulse-description {
+  max-width: 190px;
+  margin: 15px 0 22px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.module-link {
+  border: 0;
+  padding: 0;
+  color: #211e1b;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.module-link span {
+  margin-left: 5px;
+  color: #e55943;
+  font-size: 16px;
+}
+
+.module-period {
+  color: #a39a91;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+}
+
+.trend-list {
+  margin-top: 17px;
+}
+
+.trend-item {
+  display: grid;
+  grid-template-columns: 25px 1fr 15px;
+  gap: 7px;
+  align-items: start;
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid #ded6cd;
+  color: #211e1b;
+  background: transparent;
+  text-align: left;
+}
+
+.trend-index {
+  color: #e55943;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+}
+
+.trend-item strong,
+.trend-item small {
+  display: block;
+}
+
+.trend-item strong {
+  font-size: 12px;
+}
+
+.trend-item small {
+  margin-top: 3px;
+  color: #766f67;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+}
+
+.trend-arrow {
+  color: #766f67;
+}
+
+.principles-module {
+  border-bottom: 1px solid #d8d0c6;
+}
+
+.principles-module p {
+  max-width: 205px;
+  margin: 18px 0 13px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.06em;
+}
+
+.principles-line {
+  display: block;
+  width: 38px;
+  height: 3px;
+  margin-bottom: 13px;
+  background: #e55943;
+}
+
+.principles-module small {
+  display: block;
+  color: #766f67;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.rail-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 13px;
+  padding-top: 18px;
+  color: #928980;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+}
+
+.rail-footer small {
+  flex-basis: 100%;
+  margin-top: 8px;
+}

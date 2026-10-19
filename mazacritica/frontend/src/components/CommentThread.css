@@ -1,0 +1,141 @@
+.comment-gate {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 17px;
+  background: #e9e1d7;
+}
+
+.comment-list {
+  display: grid;
+  gap: 0;
+  margin-bottom: 18px;
+}
+
+.comment {
+  display: flex;
+  gap: 11px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.comment-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--ink);
+  background: #d8d0c6;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.comment-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.comment-meta strong {
+  font-size: 11px;
+}
+
+.comment-meta span {
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+}
+
+.comment p {
+  margin: 6px 0 8px;
+  color: #403a35;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.comment-actions button {
+  min-height: 30px;
+  padding: 4px 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.comment-actions button:hover {
+  color: var(--coral);
+}
+
+.comment-gate-mark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--paper);
+  background: var(--ink);
+  font-size: 18px;
+}
+
+.comment-gate > div {
+  flex: 1;
+}
+
+.comment-gate strong {
+  display: block;
+  font-size: 12px;
+}
+
+.comment-gate p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.comment-gate .join-button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 760px) {
+  .note-detail > h1 {
+    font-size: clamp(34px, 10vw, 50px);
+  }
+
+  .detail-summary {
+    font-size: 14px;
+  }
+
+  .detail-content {
+    font-size: 17px;
+  }
+
+  .comment-gate {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .comment-gate > div {
+    min-width: calc(100% - 50px);
+  }
+
+  .comment-gate .join-button {
+    margin-left: 45px;
+  }
+}

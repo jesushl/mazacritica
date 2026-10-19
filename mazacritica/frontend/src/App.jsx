@@ -1,50 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { api, isEditor } from './api'
-
-const accents = ['coral', 'ochre', 'blue']
-
-function formatWhen(value) {
-  if (!value) return 'Sin fecha'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Sin fecha'
-  return new Intl.DateTimeFormat('es-MX', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date)
-}
-
-function tagNames(note, tagsById) {
-  return (note.tags || [])
-    .map((tag) => tagsById.get(tag)?.name)
-    .filter(Boolean)
-}
-
-/* eslint-disable react/prop-types -- los comentarios llegan de la API */
-function CommentItem({ comment, canReply, onReply, replyForm }) {
-  return (
-    <article className={comment.parent ? 'comment comment-reply' : 'comment'}>
-      <div className="comment-avatar">{(comment.nickname || '?').slice(0, 2).toUpperCase()}</div>
-      <div className="comment-body">
-        <div className="comment-meta">
-          <strong>{comment.nickname}</strong>
-          <span>{comment.status === 'pending' ? 'Pendiente de moderación' : 'Visible'}</span>
-        </div>
-        <p>{comment.body}</p>
-        {canReply && (
-          <div className="comment-actions">
-            <button type="button" onClick={() => onReply(comment.id)}>Responder</button>
-          </div>
-        )}
-        {replyForm}
-        {(comment.replies || []).map((reply) => (
-          <CommentItem comment={reply} canReply={false} key={reply.id} onReply={onReply} />
-        ))}
-      </div>
-    </article>
-  )
-}
-/* eslint-enable react/prop-types */
+import AppShell from './components/AppShell'
+import AuthDialog from './components/AuthDialog'
+import CommentThread from './components/CommentThread'
+import Feed from './components/Feed'
+import { accents, tagNames } from './components/format'
+import JudicialPage from './components/JudicialPage'
+import NoteDetail from './components/NoteDetail'
 
 function App() {
   const [notes, setNotes] = useState([])
@@ -69,6 +32,7 @@ function App() {
   const [noteDraft, setNoteDraft] = useState({ title: '', content: '' })
   const [socialVariant, setSocialVariant] = useState('Facebook')
   const [headerVisible, setHeaderVisible] = useState(true)
+  const [section, setSection] = useState('inicio')
   const [postalCode, setPostalCode] = useState('')
   const [postalResult, setPostalResult] = useState(null)
   const [loadError, setLoadError] = useState('')
@@ -174,6 +138,11 @@ function App() {
     }
   }
 
+  const requestAuth = () => {
+    setAuthMode('login')
+    setAuthOpen(true)
+  }
+
   const submitLogin = async (event) => {
     event.preventDefault()
     try {
@@ -253,63 +222,37 @@ function App() {
 
   const submitPostalSearch = async (event) => {
     event.preventDefault()
-    const result = await api.searchPostalCode(postalCode.trim())
+    const result = await api.judicialDistrict(postalCode.trim())
     setPostalResult({
       code: result.code,
       zones: Array.isArray(result.zones) ? result.zones : [],
+      aspirantes: Array.isArray(result.aspirantes) ? result.aspirantes : [],
+      municipio: result.municipio || '',
+      estado: result.estado || '',
+      asentamientos: Array.isArray(result.asentamientos) ? result.asentamientos : [],
       detail: result.detail || '',
     })
   }
 
   const editor = isEditor(account)
-  const emptyFeedMessage = catalogReady && !selectedNote && !loadError && filteredNotes.length === 0
+  const emptyFeedMessage = catalogReady && !selectedNote && !loadError && section === 'inicio' && filteredNotes.length === 0
     ? 'No encontramos esa nota. Prueba con otra palabra o quita el filtro para ampliar la búsqueda.'
     : ''
   const statusMessage = notice || loadError || emptyFeedMessage
+  const noteIndex = selectedNote ? notes.indexOf(selectedNote) : 0
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar" aria-label="Navegación">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">M</div>
-          <div>
-            <span className="brand-name">MazaCrítica</span>
-            <span className="brand-kicker">Información que resiste</span>
-          </div>
-        </div>
-        <details className="nav-accordion" open>
-          <summary>
-            <span>Secciones</span>
-            <span className="accordion-chevron" aria-hidden="true">⌄</span>
-          </summary>
-          <nav className="primary-nav" aria-label="Navegación principal">
-            <button className="nav-item is-active" type="button" aria-current="page">
-              <span aria-hidden="true">⌂</span>
-              Inicio
-            </button>
-            <button className="nav-item" type="button" onClick={() => showNotice('La exploración estará disponible pronto.')}>
-              <span aria-hidden="true">⌕</span>
-              Explorar
-            </button>
-            <button className="nav-item" type="button" onClick={() => showNotice('El archivo se conectará con más archivos.')}>
-              <span aria-hidden="true">▱</span>
-              Archivo
-            </button>
-            <button className="nav-item" type="button" onClick={() => setQuery('')}>
-              <span aria-hidden="true">◌</span>
-              Conversaciones
-            </button>
-          </nav>
-        </details>
-        <div className="sidebar-footer">
-          <div className="profile-avatar">{account ? account.nickname.slice(0, 2).toUpperCase() : 'LC'}</div>
-          <div>
-            <strong>{account ? account.nickname : 'Lectura ciudadana'}</strong>
-            <span>{account ? (editor ? 'Editor' : 'Miembro') : 'Visita'}</span>
-          </div>
-        </div>
-      </aside>
-
+    <AppShell
+      section={section}
+      account={account}
+      editor={editor}
+      onSection={(next) => {
+        setSection(next)
+        setSelectedNoteId(null)
+      }}
+      onExplore={() => showNotice('La exploración estará disponible pronto.')}
+      status={<div className={notice ? 'toast' : 'live-status'} role="status">{statusMessage}</div>}
+    >
       <main className="main-column">
         <header
           className={headerVisible ? 'topbar' : 'topbar is-hidden'}
@@ -327,12 +270,8 @@ function App() {
             />
             <kbd>⌘ K</kbd>
           </label>
-          {account ? (
+          {account && (
             <button className="login-button" type="button" onClick={submitLogout}>Salir</button>
-          ) : (
-            <button className="login-button" type="button" onClick={() => { setAuthOpen(true); setAuthMode('login') }}>
-              Ingresar
-            </button>
           )}
           {editor && (
             <button className="login-button" type="button" onClick={() => setNoteFormOpen((open) => !open)}>
@@ -342,39 +281,15 @@ function App() {
         </header>
 
         {authOpen && !account && (
-          <section className="auth-panel" aria-label="Acceso">
-            {authMode === 'login' ? (
-              <form onSubmit={submitLogin}>
-                <label>
-                  Correo
-                  <input value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} />
-                </label>
-                <label>
-                  Contraseña
-                  <input type="password" value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} />
-                </label>
-                <button type="submit">Entrar</button>
-                <button type="button" onClick={() => setAuthMode('register')}>Crear cuenta</button>
-              </form>
-            ) : (
-              <form onSubmit={submitRegister}>
-                <label>
-                  Nickname
-                  <input value={credentials.nickname} onChange={(event) => setCredentials({ ...credentials, nickname: event.target.value })} />
-                </label>
-                <label>
-                  Correo
-                  <input value={credentials.email} onChange={(event) => setCredentials({ ...credentials, email: event.target.value })} />
-                </label>
-                <label>
-                  Contraseña
-                  <input type="password" value={credentials.password} onChange={(event) => setCredentials({ ...credentials, password: event.target.value })} />
-                </label>
-                <button type="submit">Registrarme</button>
-                <button type="button" onClick={() => setAuthMode('login')}>Ya tengo cuenta</button>
-              </form>
-            )}
-          </section>
+          <AuthDialog
+            mode={authMode}
+            credentials={credentials}
+            onCredentials={setCredentials}
+            onMode={setAuthMode}
+            onLogin={submitLogin}
+            onRegister={submitRegister}
+            onClose={() => setAuthOpen(false)}
+          />
         )}
 
         {editor && noteFormOpen && (
@@ -393,241 +308,68 @@ function App() {
 
         {loadError && <p>{loadError}</p>}
 
-        {selectedNote ? (
-          <article className={`note-detail accent-${accents[notes.indexOf(selectedNote) % accents.length]}`}>
-            <button className="back-button" type="button" onClick={() => setSelectedNoteId(null)}>
-              ← Volver al feed
-            </button>
-            <div className="detail-meta">
-              <span className="note-type">Nota</span>
-              <span>·</span>
-              <span>{formatWhen(selectedNote.published_at)}</span>
-            </div>
-            <h1>{selectedNote.title}</h1>
-            <p className="detail-summary">{selectedNote.excerpt}</p>
-            <div className="editor-byline">
-              <span className="source-avatar">MC</span>
-              <span>
-                <strong>Publicado por {selectedNote.author || 'MazaCrítica'}</strong>
-                <small>
-                  {detailSource?.url ? (
-                    <a href={detailSource.url}>{detailSource.name}</a>
-                  ) : (detailSource?.name || sourcesById.get(selectedNote.source)?.name || 'Fuente')}
-                </small>
-              </span>
-            </div>
-            <p className="detail-content">{selectedNote.content}</p>
-            <div className="detail-tags">
-              {tagNames(selectedNote, tagsById).map((tag) => <span className="note-tag" key={tag}>{tag}</span>)}
-            </div>
-
-            <section className="social-preview" aria-labelledby="social-preview-title">
-              <div className="detail-section-heading">
-                <div>
-                  <span className="eyebrow">PRESENTACIÓN SOCIAL</span>
-                  <h2 id="social-preview-title">Una nota, distintos canales</h2>
-                </div>
-              </div>
-              <div className="variant-tabs" role="tablist" aria-label="Variantes sociales">
-                {['Facebook', 'Instagram', 'TikTok'].map((variant) => (
-                  <button
-                    className={socialVariant === variant ? 'variant-tab is-active' : 'variant-tab'}
-                    key={variant}
-                    onClick={() => setSocialVariant(variant)}
-                    aria-selected={socialVariant === variant}
-                    role="tab"
-                    type="button"
-                  >
-                    {variant}
-                  </button>
-                ))}
-              </div>
-              <div className={`social-card social-${socialVariant.toLowerCase()}`}>
-                <span className="social-card-label">{socialVariant} · Vista previa</span>
-                <strong>{selectedNote.title}</strong>
-                <p>{selectedNote.excerpt}</p>
-              </div>
-            </section>
-
-            <section className="comments-section" aria-labelledby="comments-title">
-              <div className="detail-section-heading">
-                <div>
-                  <span className="eyebrow">CONVERSACIÓN</span>
-                  <h2 id="comments-title">{comments.length} comentarios visibles</h2>
-                </div>
-              </div>
-              <div className="comment-list">
-                {comments.map((comment) => (
-                  <CommentItem
-                    key={comment.id}
-                    comment={comment}
-                    canReply={Boolean(account)}
-                    onReply={(id) => {
-                      setReplyTo(id)
-                      setReplyBody('')
-                    }}
-                    replyForm={replyTo === comment.id ? (
-                      <form onSubmit={submitReply}>
-                        <label>
-                          Respuesta directa
-                          <textarea value={replyBody} onChange={(event) => setReplyBody(event.target.value)} required />
-                        </label>
-                        <button type="submit">Publicar respuesta</button>
-                      </form>
-                    ) : null}
-                  />
-                ))}
-              </div>
-              {account ? (
-                <form className="comment-composer" aria-label="Nuevo comentario" onSubmit={submitComment}>
-                  <label>
-                    Comentario
-                    <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} required />
-                  </label>
-                  <button type="submit">Publicar comentario</button>
-                </form>
-              ) : (
-                <div className="comment-gate">
-                  <span className="comment-gate-mark">◌</span>
-                  <div>
-                    <strong>La conversación empieza con contexto.</strong>
-                    <p>Ingresa para comentar con tu nickname. Las notas editoriales solo las publica MazaCrítica.</p>
-                  </div>
-                </div>
-              )}
-            </section>
-          </article>
+        {section === 'poder-judicial' ? (
+          <JudicialPage
+            postalCode={postalCode}
+            postalResult={postalResult}
+            onPostalCode={setPostalCode}
+            onSearch={submitPostalSearch}
+            onOpenNote={(noteId) => {
+              setSection('inicio')
+              openNote(noteId)
+            }}
+          />
+        ) : selectedNote ? (
+          <NoteDetail
+            note={selectedNote}
+            accent={accents[noteIndex % accents.length]}
+            tagsById={tagsById}
+            source={detailSource}
+            sourceName={sourcesById.get(selectedNote.source)?.name}
+            socialVariant={socialVariant}
+            onSocialVariant={setSocialVariant}
+            onBack={() => setSelectedNoteId(null)}
+          >
+            <CommentThread
+              comments={comments}
+              account={account}
+              commentBody={commentBody}
+              replyTo={replyTo}
+              replyBody={replyBody}
+              onCommentBody={setCommentBody}
+              onReplyBody={setReplyBody}
+              onSubmitComment={submitComment}
+              onSubmitReply={submitReply}
+              onRequestAuth={requestAuth}
+              onReply={(id) => {
+                if (!account) {
+                  requestAuth()
+                  return
+                }
+                setReplyTo(id)
+                setReplyBody('')
+              }}
+            />
+          </NoteDetail>
         ) : (
-          <>
-            <section className="intro-section">
-              <div>
-                <p className="eyebrow"><span className="live-pulse" /> Edición en curso</p>
-                <h1>No seguimos personas.<br /><em>Seguimos hechos.</em></h1>
-                <p className="intro-copy">
-                  Noticias, contexto y conversación para entender cómo se mueve el poder público.
-                </p>
-              </div>
-              <div className="intro-stamp">
-                <span>EDICIÓN</span>
-                <strong>01</strong>
-                <span>NOTAS PUBLICADAS</span>
-              </div>
-            </section>
-            <div className="feed-tabs" role="tablist" aria-label="Orden del feed">
-              {['Para ti', 'Más recientes', 'Más discutidas'].map((tab) => (
-                <button
-                  className={activeTab === tab ? 'feed-tab is-active' : 'feed-tab'}
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  aria-selected={activeTab === tab}
-                  role="tab"
-                  type="button"
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-            <section className="tag-strip" aria-label="Filtrar por etiquetas">
-              <span className="filter-label">Filtrar</span>
-              {availableTags.map((tag) => (
-                <button
-                  className={activeTag === tag ? 'filter-chip is-active' : 'filter-chip'}
-                  key={tag}
-                  onClick={() => setActiveTag(tag)}
-                  aria-pressed={activeTag === tag}
-                  type="button"
-                >
-                  {tag}
-                </button>
-              ))}
-            </section>
-            <section className="feed">
-              {filteredNotes.length ? filteredNotes.map((note, index) => (
-                <article className={`note-card accent-${accents[index % accents.length]}`} key={note.id}>
-                  <div className="note-meta">
-                    <span className="note-type">Nota</span>
-                    <span className="meta-separator">·</span>
-                    <span>{formatWhen(note.published_at)}</span>
-                    <button
-                      className={savedNotes.includes(note.id) ? 'save-button is-saved' : 'save-button'}
-                      onClick={() => setSavedNotes((current) => (
-                        current.includes(note.id) ? current.filter((id) => id !== note.id) : [...current, note.id]
-                      ))}
-                      type="button"
-                      aria-label={savedNotes.includes(note.id) ? 'Quitar de guardados' : 'Guardar nota'}
-                    >
-                      {savedNotes.includes(note.id) ? '★' : '☆'}
-                    </button>
-                  </div>
-                  <button className="note-title-button" type="button" onClick={() => openNote(note.id)}>
-                    <h2>{note.title}</h2>
-                  </button>
-                  <p className="note-summary">{note.excerpt}</p>
-                  <div className="note-source">
-                    <span className="source-avatar">MC</span>
-                    <span>{sourcesById.get(note.source)?.name || 'Fuente'}</span>
-                  </div>
-                  <div className="note-bottom">
-                    <div className="note-tags">
-                      {tagNames(note, tagsById).map((tag) => <span className="note-tag" key={tag}>{tag}</span>)}
-                    </div>
-                    <div className="note-actions">
-                      <button type="button" onClick={() => openNote(note.id)}>Leer nota →</button>
-                    </div>
-                  </div>
-                </article>
-              )) : (
-                <div className="empty-state">
-                  <span className="empty-mark">∅</span>
-                  <h2>No encontramos esa nota</h2>
-                  <p>Prueba con otra palabra o quita el filtro para ampliar la búsqueda.</p>
-                </div>
-              )}
-            </section>
-          </>
+          <Feed
+            notes={filteredNotes}
+            tagsById={tagsById}
+            sourcesById={sourcesById}
+            availableTags={availableTags}
+            activeTab={activeTab}
+            activeTag={activeTag}
+            savedNotes={savedNotes}
+            onTab={setActiveTab}
+            onTag={setActiveTag}
+            onOpen={openNote}
+            onToggleSave={(noteId) => setSavedNotes((current) => (
+              current.includes(noteId) ? current.filter((id) => id !== noteId) : [...current, noteId]
+            ))}
+          />
         )}
       </main>
-
-      <aside className="right-rail" aria-label="Contexto editorial">
-        <section className="rail-module">
-          <h2 className="eyebrow">Código postal</h2>
-          <form className="postal-search" onSubmit={submitPostalSearch}>
-            <label>
-              Código postal
-              <input value={postalCode} onChange={(event) => setPostalCode(event.target.value)} inputMode="numeric" />
-            </label>
-            <button type="submit">Buscar zona</button>
-          </form>
-          {postalResult && (
-            <div className="postal-result">
-              <ul aria-label="Zonas del código postal">
-                {postalResult.zones.map((zone) => (
-                  <li key={`${zone.code}-${zone.valid_from}`}>
-                    {zone.name} · {zone.code}
-                    <small>{zone.valid_from} – {zone.valid_to}</small>
-                  </li>
-                ))}
-              </ul>
-              {postalResult.zones.length === 0 && <p>{postalResult.detail}</p>}
-            </div>
-          )}
-        </section>
-        <section className="rail-module principles-module">
-          <h2 className="eyebrow">Nuestra regla</h2>
-          <p>Una sospecha no es una sentencia.</p>
-          <span className="principles-line" />
-          <small>Señalamos el estado de la información para que puedas formar tu propio criterio.</small>
-        </section>
-        <footer className="rail-footer">
-          <span>Sobre el proyecto</span>
-          <span>Metodología</span>
-          <span>Fuentes</span>
-          <span>Contacto</span>
-          <small>© 2026 MazaCrítica</small>
-        </footer>
-      </aside>
-      <div className={notice ? 'toast' : 'live-status'} role="status">{statusMessage}</div>
-    </div>
+    </AppShell>
   )
 }
 

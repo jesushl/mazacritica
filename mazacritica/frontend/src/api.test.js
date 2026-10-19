@@ -91,6 +91,7 @@ describe('createApi', () => {
         return Promise.resolve({ data: [{ id: 9, nickname: 'desde_api', body: 'Visible', replies: [] }] })
       }
       if (url === '/postal-code-search/') return Promise.resolve({ data: { code: '99020', zones: [] } })
+      if (url === '/poder-judicial/distrito/') return Promise.resolve({ data: { code: '99020', zones: [], aspirantes: [] } })
       return Promise.resolve({ data: {} })
     })
     const api = createApi({}, memoryStorage())
@@ -100,12 +101,14 @@ describe('createApi', () => {
     await api.comments(4)
     await api.postComment(4, { body: 'Hola', nickname: 'falso' })
     await api.searchPostalCode('99020')
+    await api.judicialDistrict('99020')
 
     expect(client.get).toHaveBeenCalledWith('/notes/', { params: { status: 'published' } })
     expect(client.get).toHaveBeenCalledWith('/me/')
     expect(client.get).toHaveBeenCalledWith('/notes/4/comments/')
     expect(client.post).toHaveBeenCalledWith('/notes/4/comments/', { body: 'Hola' })
     expect(client.get).toHaveBeenCalledWith('/postal-code-search/', { params: { code: '99020' } })
+    expect(client.get).toHaveBeenCalledWith('/poder-judicial/distrito/', { params: { code: '99020' } })
   })
 
   it('calls register and login endpoints', async () => {

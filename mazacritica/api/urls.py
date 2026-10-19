@@ -1,27 +1,24 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from .views import (
-    CandidacyViewSet,
-    CandidateViewSet,
+from .views.auth import LoginView, LogoutView, MeView, RegisterView
+from .views.comments import (
     CommentDetailView,
     CommentModerateView,
     CommentReportCreateView,
+    NoteCommentListCreateView,
+)
+from .views.electoral import (
+    CandidacyViewSet,
+    CandidateViewSet,
     ElectionViewSet,
     ElectionZoneViewSet,
-    LoginView,
-    LogoutView,
-    MeView,
-    NoteCommentListCreateView,
-    NoteViewSet,
     OfficeViewSet,
     PostalCodeSearchView,
     PostalCodeViewSet,
     PostalCodeZoneMappingViewSet,
-    RegisterView,
-    SourceViewSet,
-    TagViewSet,
 )
+from .views.notes import NoteViewSet, SourceViewSet, TagViewSet
 
 router = DefaultRouter()
 router.register('notes', NoteViewSet, basename='note')

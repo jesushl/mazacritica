@@ -1,0 +1,220 @@
+.back-button {
+  min-height: 44px;
+  margin: 28px 0 34px;
+  padding: 8px 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.back-button:hover {
+  color: var(--ink);
+}
+
+.note-detail {
+  padding-bottom: 80px;
+}
+
+.detail-meta {
+  display: flex;
+  gap: 9px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.note-detail > h1 {
+  max-width: 700px;
+  margin: 15px 0 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(34px, 4vw, 54px);
+  line-height: 1;
+  letter-spacing: -0.07em;
+}
+
+.detail-summary {
+  max-width: 630px;
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.editor-byline {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 22px;
+}
+
+.editor-byline > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.editor-byline strong {
+  font-size: 11px;
+}
+
+.editor-byline small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.detail-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: 630px;
+  margin-bottom: 28px;
+  padding: 12px 14px;
+  border: 1px solid #d8d0c6;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.detail-status strong {
+  color: var(--ink);
+}
+
+.status-mark {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.detail-content {
+  max-width: 630px;
+  margin: 0 0 19px;
+  color: #403a35;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 42px;
+}
+
+.social-preview,
+.comments-section {
+  max-width: 630px;
+  padding: 25px 0;
+  border-top: 1px solid var(--line);
+}
+
+.detail-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.detail-section-heading h2 {
+  margin: 9px 0 19px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  letter-spacing: -0.05em;
+}
+
+.editor-only-label {
+  padding: 5px 7px;
+  color: var(--coral);
+  background: #e5594316;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.variant-tabs {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--line);
+}
+
+.variant-tab {
+  min-height: 38px;
+  padding: 5px 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.variant-tab.is-active {
+  color: var(--ink);
+  border-bottom: 2px solid var(--accent);
+}
+
+.social-card {
+  display: grid;
+  gap: 11px;
+  min-height: 175px;
+  padding: 21px;
+  color: #f4f0e9;
+  background: #211e1b;
+}
+
+.social-card-label {
+  color: #d9cfc4;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.social-card strong {
+  max-width: 480px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 25px;
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+}
+
+.social-card p {
+  max-width: 500px;
+  margin: 0;
+  color: #d9cfc4;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.social-card small {
+  color: #e55943;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+}
+
+.social-instagram {
+  background: #3e2f42;
+}
+
+.social-tiktok {
+  background: #142e32;
+}
+
+@media (max-width: 760px) {
+  .note-detail > h1 {
+    font-size: clamp(34px, 10vw, 50px);
+  }
+
+  .detail-summary {
+    font-size: 14px;
+  }
+
+  .detail-content {
+    font-size: 17px;
+  }
+}

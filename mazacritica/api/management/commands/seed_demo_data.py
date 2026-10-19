@@ -5,6 +5,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.text import slugify
 
+from poder_judicial.models import NoteMention
+
 from api.models import (
     Candidacy,
     Candidate,
@@ -67,7 +69,7 @@ class Command(BaseCommand):
         published = self._notes(editor, source, topic)
         visible = self._comments(published, member)
         self._report_and_moderation(visible, member, moderator)
-        self._elections()
+        self._elections(published)
         self.stdout.write(self.style.SUCCESS('Datos ficticios de demostración listos.'))
 
     def _user(self, username, email, group_name):
@@ -218,7 +220,7 @@ class Command(BaseCommand):
             status=ModerationAction.Status.VISIBLE,
         )
 
-    def _elections(self):
+    def _elections(self, published):
         first, _created = Election.objects.update_or_create(
             slug='eleccion-ficticia-2027',
             defaults={
@@ -286,6 +288,31 @@ class Command(BaseCommand):
             zone=south,
             defaults={'status': Candidacy.Status.WITHDRAWN},
         )
+        mentioned, _created = Candidate.objects.update_or_create(
+            slug='aspirante-judicial-ficticia',
+            defaults={'name': 'Aspirante Judicial Ficticia'},
+        )
+        quiet, _created = Candidate.objects.update_or_create(
+            slug='aspirante-judicial-sin-nota',
+            defaults={'name': 'Aspirante Judicial Sin Nota'},
+        )
+        Candidacy.objects.update_or_create(
+            candidate=mentioned,
+            election=first,
+            office=judicial,
+            zone=north,
+            defaults={'status': Candidacy.Status.CONFIRMED},
+        )
+        Candidacy.objects.update_or_create(
+            candidate=quiet,
+            election=first,
+            office=judicial,
+            zone=south,
+            defaults={'status': Candidacy.Status.CONFIRMED},
+        )
+        draft = Note.objects.get(slug='nota-borrador-ficticia')
+        NoteMention.objects.update_or_create(candidate=mentioned, note=published)
+        NoteMention.objects.update_or_create(candidate=mentioned, note=draft)
         unmapped, _created = PostalCode.objects.update_or_create(code='99000')
         mapped, _created = PostalCode.objects.update_or_create(code='99020')
         PostalCodeZoneMapping.objects.update_or_create(

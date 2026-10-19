@@ -101,6 +101,10 @@ export function createApi(env = import.meta.env, storage = window.localStorage) 
       const { data } = await client.get('/postal-code-search/', { params: { code } })
       return data
     },
+    async judicialDistrict(code) {
+      const { data } = await client.get('/poder-judicial/distrito/', { params: { code } })
+      return data
+    },
   }
 }
 

@@ -1,0 +1,88 @@
+.postal-result ul {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.postal-result li {
+  display: grid;
+  gap: 2px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.postal-result small,
+.postal-result p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.district-definition {
+  max-width: 640px;
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.district-map {
+  height: 280px;
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.district-map-block p {
+  margin: 8px 0 0;
+}
+
+.judicial-page h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(40px, 6vw, 68px);
+  line-height: 0.95;
+}
+
+.aspirant-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.aspirant-card {
+  padding: 16px;
+  background: #fffdf9;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.aspirant-card h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+}
+
+.aspirant-card p,
+.aspirant-card small {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.aspirant-card ul {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aspirant-card button {
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font-size: 16px;
+  text-align: left;
+}

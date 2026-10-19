@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
+    'poder_judicial',
     'rest_framework',
     'rest_framework.authtoken',
     'webpack_loader',
